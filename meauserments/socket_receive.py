@@ -3,6 +3,7 @@
 import socket
 import time
 import select
+import sys
 
 sys.path.append("..")
 
@@ -29,9 +30,12 @@ while True:
     try:
         payload, addr = sock.recvfrom(256)
     except (socket.error, socket.herror, socket.gaierror, socket.timeout):
+        print("exception")
         continue
     else:
         received = payload
+        print("got", received)
+
 
     end = time.time()
 
