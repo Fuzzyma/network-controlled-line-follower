@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from node.bot import Bot, TimeoutError
 import time
 
