@@ -204,6 +204,10 @@ class Bot:
         else:
             return 0
 
+    def reset(self):
+        self.motor.reset()
+        return self
+
     '''def getSpeed(self):
         correction = self.getLastCorrection()
 

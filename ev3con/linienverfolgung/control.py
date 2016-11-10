@@ -201,6 +201,17 @@ class MotorControl(object):
             if self.motors[p].connected:
                 self.motors[p].stop()
 
+    def reset(self, ports='ABCD'):
+        """Resetet alle Motoren
+
+        Keyword Argument:
+        ports= Portliste/string der anzusteuernden Motoren
+        """
+
+        for p in ports:
+            if self.motors[p].connected:
+                self.motors[p].reset()
+
 '''
 class TotalControl(MotorControl):
     """Kontrolliert die Geschwindigkeit der einzelnen Motoren um einen Abstand und die Linie zu halten.
