@@ -29,6 +29,7 @@ class Packet:
         cls.packet["referer"] = referer
         cls.packet["id"] += 1
         cls.packet["time"] = time.time()
+        cls.packet["ack"] = ack
         return cls.packet
 
     @classmethod
