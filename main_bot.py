@@ -6,7 +6,7 @@ import time
 
 def main():
     b = Bot().reset()
-    print "Calibrate"
+    print("Calibrate")
     b.calibrate()
 
     i = 0.0
