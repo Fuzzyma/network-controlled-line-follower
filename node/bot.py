@@ -200,7 +200,7 @@ class Bot:
 
     def getLastCorrection(self):
         if self.corrections:
-            return self.corrections[-1].data
+            return self.corrections[-1]["data"]
         else:
             return 0
 
