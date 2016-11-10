@@ -1,27 +1,45 @@
 #!/usr/bin/env python3
 
-# import ev3dev.ev3 as ev3
-
-import sys
 import socket
 import time
 import json
 import select
 from ev3con.linienverfolgung.control import MotorControl, BetterColorSensor
-from constants import DEBUG
+from constants import DEBUG, BOT_ADDR, AP_ADDR
 
 
 class TimeoutError(RuntimeError):
     pass
 
 
+class Packet:
+    packet = {
+        "id": 0,
+        "data": None,
+        "ack": False,
+        "time": 0,
+        "type": None,
+        "referer": None
+    }
+
+    @classmethod
+    def create(cls, type=None, data=None, referer=None, ack=False):
+        cls.packet["type"] = type
+        cls.packet["data"] = data
+        cls.packet["referer"] = referer
+        cls.packet["id"] += 1
+        cls.packet["time"] = time.time()
+        return cls.packet
+
+    @classmethod
+    def last(cls):
+        return cls.packet
+
+
 class Bot:
     def __init__(self):
-        self.botCon = ('192.168.137.3', 45600)
-        self.apCon = ('192.168.137.1', 45601)
-
-        # self.botCon = ('192.168.100.230', 45600)
-        # self.apCon = ('192.168.100.241', 45601)
+        self.botCon = BOT_ADDR
+        self.apCon = AP_ADDR
 
         # initialize sensor and motors
         # self.sensor = ev3.ColorSensor()
@@ -113,15 +131,17 @@ class Bot:
         return self
 
     def send(self, data=None, type='DATA', ack=False):
-        self.msgCnt += 1
-        payload = {
+        # self.msgCnt += 1
+        payload = Packet.create(type, data, self.received["id"], ack)
+
+        '''payload = {
             "time": time.time(),
             "type": type,
             "data": data,
             "id": self.msgCnt,
             "referer": self.received["id"],
             "ack": ack
-        }
+        }'''
 
         if self.debug:
             print("Sending:", payload)

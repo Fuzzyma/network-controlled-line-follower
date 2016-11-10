@@ -5,7 +5,7 @@ import json
 import time
 import select
 from ev3con.linienverfolgung.pid import PID as BasePID
-from constants import DEBUG
+from constants import DEBUG, BOT_ADDR, AP_ADDR
 
 
 class TimeoutError(RuntimeError):
@@ -40,8 +40,8 @@ class PID(BasePID):
 
 class AP:
     def __init__(self):
-        self.botCon = ('192.168.137.3', 45600)
-        self.apCon = ('192.168.137.1', 45601)
+        self.botCon = BOT_ADDR
+        self.apCon = AP_ADDR
 
         # self.botCon = ('192.168.100.230', 45600)
         # self.apCon = ('192.168.100.241', 45601)
