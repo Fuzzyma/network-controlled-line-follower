@@ -22,7 +22,7 @@ class PID(BasePID):
         BasePID.__init__(self, kp, ki, kd, **kwargs)
 
         try:
-            self.grey_soll = ((127.5 - black) / (white - black)) * 255
+            self.grey_soll = 0  # ((127.5 - black) / (white - black)) * 255
         except ZeroDivisionError:
             print("Caliration failed")
             raise KeyboardInterrupt
@@ -40,7 +40,7 @@ class PID(BasePID):
         except ZeroDivisionError:
             print("Calibration failed")
             raise KeyboardInterrupt
-        speed = self.calc(grey, self.grey_soll)
+        speed = self.calc(grey_l-grey_r, self.grey_soll)
 
         return int(speed)
 

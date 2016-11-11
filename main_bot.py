@@ -9,6 +9,8 @@ def main():
     print("Calibrate")
     b.calibrate()
 
+    input("Press Enter to start")
+
     i = 0.0
     dropped_packages = 0
     start = time.time()
