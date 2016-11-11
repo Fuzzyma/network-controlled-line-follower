@@ -28,7 +28,7 @@ def main():
             return
 
         result = map(operator.sub, benchmark_stop, benchmark_start)
-        result = [i * 3 for i in result]
+        result = [i * 1000 for i in result]
 
         print("Mean time:", sum(result) / float(len(result)))
         print("Max/Min:", max(result), '/', min(result))
