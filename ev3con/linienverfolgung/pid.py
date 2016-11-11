@@ -72,7 +72,11 @@ class PID(object):
         self._int_sum = i
 
         # Differential
-        d = (error - self._old) / dt
+        try:
+            d = (error - self._old) / dt
+        except ZeroDivisionError:
+            d = 0
+            print("Zero Division!")
 
         if self._d_avg:
             d = self._d_avg.calc(d)
