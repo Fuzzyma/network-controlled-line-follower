@@ -50,7 +50,8 @@ class Bot:
 
         # initialize sensor and motors
         # self.sensor = ev3.ColorSensor()
-        self.better_sensor = BetterColorSensor(port="1")
+        self.better_sensor_l = BetterColorSensor(port="1")
+        self.better_sensor_r = BetterColorSensor(port="4")
         # self.sensor.mode = u'COL-REFLECT'
 
         # self.lMotor = ev3.LargeMotor('outD')
@@ -184,7 +185,7 @@ class Bot:
             print("white: ", white)
             print("black: ", black)
 
-        return [white, black]
+        return [white[0], black[0]]
 
     def left(self, dv):
         # self.lMotor.run_forever(speed_sp=speed)
@@ -201,7 +202,7 @@ class Bot:
         return self
 
     def getData(self):
-        return self.better_sensor.grey_avg
+        return self.better_sensor_l.grey_avg, self.better_sensor_r.grey_avg
         # return self.sensor.value()
 
     def getLastCorrection(self):

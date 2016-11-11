@@ -33,7 +33,10 @@ class PID(BasePID):
         """noetige Geschwindigkeitsaenderung"""
 
         try:
-            grey = ((grey - self.black) / (self.white - self.black)) * 255
+            grey_l = ((grey[0] - self.black) / (self.white - self.black)) * 255
+            grey_r = ((grey[0] - self.black) / (self.white - self.black)) * 255
+
+            grey = (grey_l + grey_r) / 2
         except ZeroDivisionError:
             print("Calibration failed")
             raise KeyboardInterrupt
