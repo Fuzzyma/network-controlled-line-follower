@@ -161,7 +161,8 @@ class AP:
         white, black = self.sendEnsured(type='CALIBRATION_REQUEST').receive('CALIBRATION_DATA').received["data"]
         # self.midpoint = (white - black) / 2 + black
 
-        self.pid = PID(1.4, 0.01, -5, white, black, **{"antiwindup": 20, "maxval": 300})
+        # self.pid = PID(1.4, 0.01, -5, white, black, **{"antiwindup": 20, "maxval": 300})
+        self.pid = PID(1.6, 0.01, 0, white, black, **{"antiwindup": 20, "maxval": 300})
 
         if self.debug:
             print("Got calibration data: White [", white, "], Black [", black, "]")
