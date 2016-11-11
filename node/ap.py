@@ -5,11 +5,12 @@ import json
 import time
 import select
 from ev3con.linienverfolgung.pid import PID as BasePID
-from .constants import DEBUG, BOT_ADDR, AP_ADDR
 
-#import importlib
-#spam_loader = importlib.find_loader('.constants')
-#found = spam_loader is not None
+
+if __name__ == '__main__':
+    from constants import  DEBUG, BOT_ADDR, AP_ADDR
+else:
+    from .constants import DEBUG, BOT_ADDR, AP_ADDR
 
 
 class TimeoutError(RuntimeError):

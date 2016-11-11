@@ -5,7 +5,11 @@ import time
 import json
 import select
 from ev3con.linienverfolgung.control import MotorControl, BetterColorSensor
-from .constants import DEBUG, BOT_ADDR, AP_ADDR
+
+if __name__ == '__main__':
+    from constants import  DEBUG, BOT_ADDR, AP_ADDR
+else:
+    from .constants import DEBUG, BOT_ADDR, AP_ADDR
 
 
 class TimeoutError(RuntimeError):
