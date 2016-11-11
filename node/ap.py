@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import socket
 import json
@@ -6,6 +6,10 @@ import time
 import select
 from ev3con.linienverfolgung.pid import PID as BasePID
 from .constants import DEBUG, BOT_ADDR, AP_ADDR
+
+#import importlib
+#spam_loader = importlib.find_loader('.constants')
+#found = spam_loader is not None
 
 
 class TimeoutError(RuntimeError):
@@ -19,7 +23,7 @@ class PID(BasePID):
         try:
             self.grey_soll = ((127.5 - black) / (white - black)) * 255
         except ZeroDivisionError:
-            print "Caliration failed"
+            print("Caliration failed")
             raise KeyboardInterrupt
         self.black = black
         self.white = white
@@ -30,10 +34,9 @@ class PID(BasePID):
         try:
             grey = ((grey - self.black) / (self.white - self.black)) * 255
         except ZeroDivisionError:
-            print "Calibration failed"
+            print("Calibration failed")
             raise KeyboardInterrupt
         speed = self.calc(grey, self.grey_soll)
-        # print(speed)
 
         return int(speed)
 
@@ -85,21 +88,21 @@ class AP:
         except (socket.error, socket.herror, socket.gaierror, socket.timeout):
             return False
         else:
-            self.received = json.loads(payload)
+            self.received = json.loads(payload.decode("utf-8"))
 
             if self.debug:
-                print "Package:", self.received
+                print("Package:", self.received)
 
             if self.received["ack"]:
                 if self.debug:
-                    print "Received ACK Request. Sending Answer"
+                    print("Received ACK Request. Sending Answer")
                 self.send(type="ACK")
 
             if self.received["type"] == 'DATA':
                 self.data.append(self.received)  # filter and sort!!!
 
             if self.received["type"] == 'ACK' and self.debug:
-                print "Received ACK"
+                print("Received ACK")
 
             if self.received["type"] != type:
                 return False
@@ -132,11 +135,11 @@ class AP:
         }
 
         if self.debug:
-            print "Sending:", payload
+            print("Sending:", payload)
 
         self.history[self.msgCnt] = payload
 
-        self.sock.sendto(json.dumps(payload), self.botCon)
+        self.sock.sendto(json.dumps(payload).encode('utf-8'), self.botCon)
 
         return self
 
@@ -160,7 +163,7 @@ class AP:
         self.pid = PID(1.4, 0.01, -5, white, black, **{"antiwindup": 20, "maxval": 300})
 
         if self.debug:
-            print "Got calibration data: White [", white, "], Black [", black, "]"
+            print("Got calibration data: White [", white, "], Black [", black, "]")
         return self
 
     @property
@@ -237,7 +240,7 @@ class AP:
 def main():
     ap = AP()
     try:
-        print "Waiting for first package"
+        print("Waiting for first package")
         ap.calibrate()
 
         while True:

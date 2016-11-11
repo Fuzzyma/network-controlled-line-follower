@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from node.ap import AP, TimeoutError
 import time
@@ -11,7 +11,7 @@ def main():
     benchmark_stop = []
 
     try:
-        print "Requesting Calibration"
+        print("Requesting Calibration")
         ap.calibrate()
 
         while True:
@@ -27,8 +27,8 @@ def main():
         result = map(operator.sub, benchmark_stop, benchmark_start)
         result = [i * 3 for i in result]
 
-        print "Mean time:", sum(result) / float(len(result))
-        print "Max/Min:", max(result), '/', min(result)
+        print("Mean time:", sum(result) / float(len(result)) )
+        print("Max/Min:", max(result), '/', min(result) )
 
         return
 

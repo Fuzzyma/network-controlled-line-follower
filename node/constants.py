@@ -1,3 +1,3 @@
-DEBUG = False
+DEBUG = True
 BOT_ADDR = ('ev3dev', 45600)
 AP_ADDR = ('ULIMA-MASCHINE', 45601)
