@@ -59,7 +59,7 @@ class Bot:
 
         self.mParams = {
             "left_ports": "D",
-            "right_ports": "B",
+            "right_ports": "A",
             "avg_speed": 300,
             "margin_stop": 10,
             "avg_stop": 10
