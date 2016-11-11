@@ -24,11 +24,14 @@ def main():
         except TimeoutError:
             pass
 
+        if not len(benchmark_start):
+            return
+
         result = map(operator.sub, benchmark_stop, benchmark_start)
         result = [i * 3 for i in result]
 
-        print("Mean time:", sum(result) / float(len(result)) )
-        print("Max/Min:", max(result), '/', min(result) )
+        print("Mean time:", sum(result) / float(len(result)))
+        print("Max/Min:", max(result), '/', min(result))
 
         return
 
