@@ -8,7 +8,7 @@ import select
 
 if __name__ == '__main__':
     from ev3con.linienverfolgung.control import MotorControl, BetterColorSensor
-    from constants import  DEBUG, BOT_ADDR, AP_ADDR
+    from constants import DEBUG, BOT_ADDR, AP_ADDR
 else:
     from node.ev3con.linienverfolgung.control import MotorControl, BetterColorSensor
     from .constants import DEBUG, BOT_ADDR, AP_ADDR
