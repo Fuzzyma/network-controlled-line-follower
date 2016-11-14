@@ -45,6 +45,7 @@ class PID(object):
         self._d_avg = None
         for k in kwargs:
             v = kwargs[k]
+            print(k, v)
             if v is not None:
                 setattr(self, k, v)
 

@@ -22,7 +22,8 @@ class PID(BasePID):
         BasePID.__init__(self, kp, ki, kd, **kwargs)
 
         try:
-            self.grey_soll = 0  # ((127.5 - black) / (white - black)) * 255
+            self.grey_soll = 0
+            # self.grey_soll = ((127.5 - black) / (white - black)) * 255
         except ZeroDivisionError:
             print("Caliration failed")
             raise KeyboardInterrupt
@@ -34,13 +35,16 @@ class PID(BasePID):
 
         try:
             grey_l = ((grey[0] - self.black) / (self.white - self.black)) * 255
-            grey_r = ((grey[0] - self.black) / (self.white - self.black)) * 255
+            grey_r = ((grey[1] - self.black) / (self.white - self.black)) * 255
+
+            # print(grey_l, grey_r)
 
             grey = (grey_l + grey_r) / 2
         except ZeroDivisionError:
             print("Calibration failed")
             raise KeyboardInterrupt
         speed = self.calc(grey_l-grey_r, self.grey_soll)
+        # speed = self.calc(grey, self.grey_soll)
 
         return int(speed)
 
@@ -165,7 +169,7 @@ class AP:
         # self.midpoint = (white - black) / 2 + black
 
         # self.pid = PID(1.4, 0.01, -5, white, black, **{"antiwindup": 20, "maxval": 300})
-        self.pid = PID(1.6, 0.01, 0, white, black, **{"antiwindup": 20, "maxval": 300})
+        self.pid = PID(0.5, 0.1, 0, white, black, antiwindup=20, maxval=1000)
 
         if self.debug:
             print("Got calibration data: White [", white, "], Black [", black, "]")
@@ -179,8 +183,9 @@ class AP:
             return self.data[-1]["data"]
 
     def getCorrection(self):
-
-        return self.pid.dv(self.last_correction)
+        a = self.pid.dv(self.last_correction)
+        print(a)
+        return a
 
         '''
         # now = time.time()
