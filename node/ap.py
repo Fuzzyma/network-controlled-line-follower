@@ -169,7 +169,7 @@ class AP:
         # self.midpoint = (white - black) / 2 + black
 
         # self.pid = PID(1.4, 0.01, -5, white, black, **{"antiwindup": 20, "maxval": 300})
-        self.pid = PID(0.5, 0.1, 0, white, black, antiwindup=20, maxval=1000)
+        self.pid = PID(0.5, 0.1, 0, white, black, antiwindup=20, maxval=500)
 
         if self.debug:
             print("Got calibration data: White [", white, "], Black [", black, "]")
@@ -178,13 +178,12 @@ class AP:
     @property
     def last_correction(self):
         if not len(self.data):
-            return self.pid.grey_soll
+            return self.pid.grey_soll, self.pid.grey_soll
         else:
             return self.data[-1]["data"]
 
     def getCorrection(self):
         a = self.pid.dv(self.last_correction)
-        print(a)
         return a
 
         '''
