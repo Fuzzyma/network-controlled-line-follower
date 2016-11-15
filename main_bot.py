@@ -40,7 +40,7 @@ def main():
     except KeyboardInterrupt:
         b.stop().reset()
         # print("The average loop time was", (time.time() - start)/i * 1000, "ms")
-        # print(dropped_packages, "Packages where dropped because of AP not responding in time")
+        print(dropped_packages, "Packages where dropped because of AP not responding in time")
 
         if not len(benchmark_start):
             return

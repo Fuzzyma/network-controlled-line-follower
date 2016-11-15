@@ -17,6 +17,10 @@ class TimeoutError(RuntimeError):
     pass
 
 
+class BlackLineException(RuntimeError):
+    pass
+
+
 class PID(BasePID):
     def __init__(self, kp, ki=0.0, kd=0.0, white=255, black=0, **kwargs):
         BasePID.__init__(self, kp, ki, kd, **kwargs)
@@ -29,6 +33,9 @@ class PID(BasePID):
             raise KeyboardInterrupt
         self.black = black
         self.white = white
+        self.last_darkest_value = 255
+        self.last_darkest_side = None
+        self.threshold_white = 220
 
     def dv(self, grey):
         """noetige Geschwindigkeitsaenderung"""
@@ -37,9 +44,29 @@ class PID(BasePID):
             grey_l = ((grey[0] - self.black) / (self.white - self.black)) * 255
             grey_r = ((grey[1] - self.black) / (self.white - self.black)) * 255
 
+            grey = (grey_l + grey_r) / 2
+            if grey < 20:
+                print("Black line detected. Stop motors immediately")
+                # raise BlackLineException
+
+            '''
+            if grey[0] < self.last_darkest_value:
+                self.last_darkest_value = grey[0]
+                self.last_darkest_side = 'left'
+
+            if grey[1] < self.last_darkest_value:
+                self.last_darkest_value = grey[1]
+                self.last_darkest_side = 'right'
+
             # print(grey_l, grey_r)
 
-            grey = (grey_l + grey_r) / 2
+            if grey > self.threshold_white:
+                print("White detected")
+                if self.last_darkest_side == 'left':
+                    grey_l += 30
+                elif self.last_darkest_side == 'right':
+                    grey_r += 30
+            '''
         except ZeroDivisionError:
             print("Calibration failed")
             raise KeyboardInterrupt
@@ -151,12 +178,12 @@ class AP:
 
         return self
 
-    def sendEnsured(self, data=None, type='CONTROL', timeout=None):
+    def sendEnsured(self, data=None, type='CONTROL', timeout=None, interval=1000):
         start = time.time()
 
         while True:
             try:
-                self.send(data, type, ack=True).receive('ACK', 1000)
+                self.send(data, type, ack=True).receive('ACK', interval)
                 break
             except TimeoutError:
                 if timeout is not None and time.time() - start > timeout / 1000.0:
@@ -169,7 +196,8 @@ class AP:
         # self.midpoint = (white - black) / 2 + black
 
         # self.pid = PID(1.4, 0.01, -5, white, black, **{"antiwindup": 20, "maxval": 300})
-        self.pid = PID(0.5, 0.1, 0, white, black, antiwindup=20, maxval=500)
+        # Holy grail of control parameters
+        self.pid = PID(0.2, 5, 5, white, black, antiwindup=5, maxval=500)
 
         if self.debug:
             print("Got calibration data: White [", white, "], Black [", black, "]")
@@ -183,9 +211,16 @@ class AP:
             return self.data[-1]["data"]
 
     def getCorrection(self):
-        a = self.pid.dv(self.last_correction)
-        return a
+        try:
+            a = self.pid.dv(self.last_correction)
+        except BlackLineException:
+            self.forceStop()
+        else:
+            return a
 
+    def forceStop(self):
+        self.sendEnsured(type="FORCE_STOP", interval=200)
+        return self
         '''
         # now = time.time()
         # filter all values which are older than 50ms and sort entries with time

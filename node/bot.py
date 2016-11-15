@@ -90,6 +90,8 @@ class Bot:
         self.msgCnt = 0
 
     def tryReceive(self, type='CONTROL'):
+        # Using select is in average as fast as using nonblocking sckets.
+        # However: minimum time is about 3ms worse but maximum time is 20-30ms better
         readable, writable, exceptional = select.select([self.sock], [], [self.sock], 0)
 
         if not readable:
