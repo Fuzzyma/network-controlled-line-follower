@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from node.bot import Bot, TimeoutError
+from node.bot import Bot, TimeoutError, BlackLineException
 import time
 
 
@@ -26,7 +26,12 @@ def main():
 
             b.send(b.getData(), "DATA")
             try:
-                dv = b.receive("CONTROL", timeout=50).getLastCorrection()
+                try:
+                    dv = b.receive("CONTROL", timeout=50).getLastCorrection()
+                except BlackLineException:
+                    b.stop().receive("GO")
+                    benchmark_start.pop()
+                    continue
             except TimeoutError:
                 dropped_packages += 1
                 benchmark_start.pop()

@@ -7,7 +7,7 @@ import select
 
 if __name__ == '__main__':
     from ev3con.linienverfolgung.pid import PID as BasePID
-    from constants import  DEBUG, BOT_ADDR, AP_ADDR
+    from constants import DEBUG, BOT_ADDR, AP_ADDR
 else:
     from node.ev3con.linienverfolgung.pid import PID as BasePID
     from .constants import DEBUG, BOT_ADDR, AP_ADDR
@@ -47,7 +47,7 @@ class PID(BasePID):
             grey = (grey_l + grey_r) / 2
             if grey < 20:
                 print("Black line detected. Stop motors immediately")
-                # raise BlackLineException
+                raise BlackLineException
 
             '''
             if grey[0] < self.last_darkest_value:
@@ -81,9 +81,6 @@ class AP:
         self.botCon = BOT_ADDR
         self.apCon = AP_ADDR
 
-        # self.botCon = ('192.168.100.230', 45600)
-        # self.apCon = ('192.168.100.241', 45601)
-
         # setup socket
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind(self.apCon)
@@ -112,7 +109,8 @@ class AP:
 
         self.history = {}
 
-    def tryReceive(self, type='CONTROL'):
+    # overwrite this function to receive data from elsewhere
+    def receive_implementation(self):
         readable, writable, exceptional = select.select([self.sock], [], [self.sock], 0)
 
         if not readable:
@@ -124,24 +122,29 @@ class AP:
             return False
         else:
             self.received = json.loads(payload.decode("utf-8"))
-
-            if self.debug:
-                print("Package:", self.received)
-
-            if self.received["ack"]:
-                if self.debug:
-                    print("Received ACK Request. Sending Answer")
-                self.send(type="ACK")
-
-            if self.received["type"] == 'DATA':
-                self.data.append(self.received)  # filter and sort!!!
-
-            if self.received["type"] == 'ACK' and self.debug:
-                print("Received ACK")
-
-            if self.received["type"] != type:
-                return False
             return True
+
+    def tryReceive(self, type='CONTROL'):
+        if not self.receive_implementation():
+            return False
+
+        if self.debug:
+            print("Package:", self.received)
+
+        if self.received["ack"]:
+            if self.debug:
+                print("Received ACK Request. Sending Answer")
+            self.send(type="ACK")
+
+        if self.received["type"] == 'DATA':
+            self.data.append(self.received)  # filter and sort!!!
+
+        if self.received["type"] == 'ACK' and self.debug:
+            print("Received ACK")
+
+        if self.received["type"] != type:
+            return False
+        return True
 
     '''def checkSock(self):
         readable, writable, exceptional = select.select([self.sock], [], [self.sock])
@@ -156,6 +159,11 @@ class AP:
                 raise TimeoutError
             continue
 
+        return self
+
+    # overwrite this function to send data elsewhere
+    def send_implementation(self, payload):
+        self.sock.sendto(json.dumps(payload).encode('utf-8'), self.botCon)
         return self
 
     def send(self, data=None, type='CONTROL', ack=False):
@@ -174,7 +182,9 @@ class AP:
 
         self.history[self.msgCnt] = payload
 
-        self.sock.sendto(json.dumps(payload).encode('utf-8'), self.botCon)
+        # self.sock.sendto(json.dumps(payload).encode('utf-8'), self.botCon)
+
+        self.send_implementation(json.dumps(payload).encode('utf-8'))
 
         return self
 
@@ -219,7 +229,7 @@ class AP:
             return a
 
     def forceStop(self):
-        self.sendEnsured(type="FORCE_STOP", interval=200)
+        self.sendEnsured(type="BLACK_LINE", interval=200)
         return self
         '''
         # now = time.time()

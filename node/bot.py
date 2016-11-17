@@ -18,6 +18,10 @@ class TimeoutError(RuntimeError):
     pass
 
 
+class BlackLineException(RuntimeError):
+    pass
+
+
 class Packet:
     packet = {
         "id": 0,
@@ -114,6 +118,9 @@ class Bot:
 
             if self.received["type"] == "STOP":
                 raise KeyboardInterrupt
+
+            if self.received["type"] == "BLACK_LINE":
+                raise BlackLineException
 
             if self.received["type"] == 'CONTROL':
                 self.corrections.append(self.received)  # filter and sort!!!
