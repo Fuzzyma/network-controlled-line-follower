@@ -4,6 +4,8 @@ import socket
 import json
 import time
 import select
+import sys
+
 
 if __name__ == '__main__':
     from ev3con.linienverfolgung.pid import PID as BasePID
@@ -29,7 +31,7 @@ class PID(BasePID):
             self.grey_soll = 0
             # self.grey_soll = ((127.5 - black) / (white - black)) * 255
         except ZeroDivisionError:
-            print("Caliration failed")
+            print("Calibration failed", file=sys.stderr)
             raise KeyboardInterrupt
         self.black = black
         self.white = white
@@ -45,9 +47,9 @@ class PID(BasePID):
             grey_r = ((grey[1] - self.black) / (self.white - self.black)) * 255
 
             grey = (grey_l + grey_r) / 2
-            if grey < 20:
-                print("Black line detected. Stop motors immediately")
-                raise BlackLineException
+            #if grey < 20:
+            #    print("Black line detected. Stop motors immediately")
+            #    raise BlackLineException
 
             '''
             if grey[0] < self.last_darkest_value:
@@ -68,7 +70,7 @@ class PID(BasePID):
                     grey_r += 30
             '''
         except ZeroDivisionError:
-            print("Calibration failed")
+            print("Calibration failed", file=sys.stderr)
             raise KeyboardInterrupt
         speed = self.calc(grey_l-grey_r, self.grey_soll)
         # speed = self.calc(grey, self.grey_soll)
@@ -77,16 +79,17 @@ class PID(BasePID):
 
 
 class AP:
-    def __init__(self):
+    def __init__(self, sockets=True):
         self.botCon = BOT_ADDR
         self.apCon = AP_ADDR
 
-        # setup socket
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.bind(self.apCon)
+        if sockets:
+            # setup socket
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.sock.bind(self.apCon)
 
-        # Use non blocking methods (program flow will not get interrupted)
-        self.sock.setblocking(True)
+            # Use non blocking methods (program flow will not get interrupted)
+            self.sock.setblocking(True)
 
         self.speed = 500
         self.received = {
@@ -131,10 +134,12 @@ class AP:
         if self.debug:
             print("Package:", self.received)
 
+        # Ack is handled by dispatcher now
         if self.received["ack"]:
             if self.debug:
                 print("Received ACK Request. Sending Answer")
             self.send(type="ACK")
+
 
         if self.received["type"] == 'DATA':
             self.data.append(self.received)  # filter and sort!!!
@@ -163,7 +168,7 @@ class AP:
 
     # overwrite this function to send data elsewhere
     def send_implementation(self, payload):
-        self.sock.sendto(json.dumps(payload).encode('utf-8'), self.botCon)
+        self.sock.sendto(payload.encode('utf-8'), self.botCon)
         return self
 
     def send(self, data=None, type='CONTROL', ack=False):
@@ -184,7 +189,7 @@ class AP:
 
         # self.sock.sendto(json.dumps(payload).encode('utf-8'), self.botCon)
 
-        self.send_implementation(json.dumps(payload).encode('utf-8'))
+        self.send_implementation(json.dumps(payload))
 
         return self
 
@@ -231,60 +236,6 @@ class AP:
     def forceStop(self):
         self.sendEnsured(type="BLACK_LINE", interval=200)
         return self
-        '''
-        # now = time.time()
-        # filter all values which are older than 50ms and sort entries with time
-        # sensor_data = [data for data in sensor_data if (now - data.time)*1000 < 50]
-        '''
-
-        '''
-        integral = 0
-        derivative = 0
-        lasterror = 0
-        error = 0
-
-        # sort sensor data and use only last 20 values to calculate new control parameters
-        sorted(self.data, key=lambda k: k['time'])
-        self.data = self.data[-20:]
-
-        # calculate new control parameters
-
-        cnt = 0
-
-        # get start parameters from last time
-        for cnt, data in enumerate(self.data):
-            try:
-                # we found parameters
-                integral = data["integral"]
-                derivative = data["derivative"]
-                lasterror = data["lasterror"]
-                break
-            except KeyError:
-                continue
-
-        # i equals the sensor data where we will start calculating so clamp the list
-        if cnt != len(self.data) - 1:
-            self.data = self.data[cnt + 1:]
-
-        for cnt, data in enumerate(self.data):
-            error = self.midpoint - data["data"]
-            integral += error
-            integral = min(50, max(integral, -50))
-            derivative = error - lasterror
-            lasterror = error
-
-            self.data[cnt]["integral"] = integral
-            self.data[cnt]["derivative"] = derivative
-            self.data[cnt]["lasterror"] = lasterror
-
-        correction = self.kp * error + self.ki * integral + self.kd * derivative
-
-        # print "Error: ", error
-        # print "Integral: ", integral
-        # print "Derivative: ", derivative
-
-        return correction
-        '''
 
     def sendCorrection(self):
         self.send(self.getCorrection(), "CONTROL")

@@ -23,6 +23,7 @@ def addFunction(args, options):
 
 
 def removeFunction(args, options):
+
     filename = args[0]
 
     with open('network_functions.txt', 'r+', encoding='utf8') as f:
