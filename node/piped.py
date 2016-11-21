@@ -34,10 +34,13 @@ class Piped:
         return self.queue.empty()
 
     def push(self, msg):
-        print(msg)
+        print(msg, flush=True)
 
     def pushJSON(self, msg):
         self.push(json.dumps(msg))
+
+    def repush(self, data):
+        self.pushJSON(data["answer"])
 
     def pull(self, timeout=None):
         base = time.time()

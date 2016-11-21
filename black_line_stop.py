@@ -5,10 +5,6 @@ import sys
 from node.package import Package
 
 
-class BlackLineException(RuntimeError):
-    pass
-
-
 def main():
     p = Piped()
     white = 255
@@ -38,8 +34,9 @@ def main():
             grey = (grey_l + grey_r) / 2
 
             if grey < 20:
-                print("Black line detected. Stop motors immediately", file=sys.stderr, flush=True)
-                p.pushJSON(Package(type="STOP", ack=True).package)
+                # TODO: send speed instead of correction and do zero speed for 2 seconds
+                print("Black line detected. Stop for 2 secs", file=sys.stderr, flush=True)
+                p.pushJSON(Package(type="BLACK_LINE", ack=True).package)
             else:
                 p.pushJSON(msg["answer"])
 

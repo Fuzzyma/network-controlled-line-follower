@@ -12,7 +12,7 @@ import sys
 import time
 
 
-debug = True
+debug = False
 
 
 class TimeoutError(RuntimeError):
@@ -39,7 +39,7 @@ class NetworkFunction:
 
         # To read the stdout of the process we create a new thread
         self.thread = Thread(target=self.read_stdout, args=(self.handle.stdout, self.queue, self.executable))
-        #self.thread.daemon = True
+        self.thread.daemon = True
         self.thread.start()
 
     def stop(self):
