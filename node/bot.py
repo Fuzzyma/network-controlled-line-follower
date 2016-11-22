@@ -13,7 +13,7 @@ if __name__ == '__main__':
 else:
     from node.ev3con.linienverfolgung.control import BetterColorSensor
     from node.MotorControl import MotorControl
-    from .constants import DEBUG, BOT_ADDR, AP_ADDR
+    from .constants import DEBUG, BOT_ADDR, AP_ADDR, RIGHT_PORT, LEFT_PORT
 
 
 class TimeoutError(RuntimeError):
