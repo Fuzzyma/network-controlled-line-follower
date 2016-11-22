@@ -43,16 +43,20 @@ class AP(BaseAP):
 
 shutdown = False
 
-def sigterm_handler():
+def sigterm_handler(a, b, c):
     shutdown = True
 
 def main():
-    ap = AP()
+    if len(sys.argv) > 1 and sys.argv[1] == 'socket':
+        ap = BaseAP()
+    else:
+        ap = AP()
 
     benchmark_start = []
     benchmark_stop = []
 
     signal.signal(signal.SIGTERM, sigterm_handler)
+    signal.signal(signal.SIGINT, sigterm_handler)
 
     try:
         print("Requesting Calibration", file=sys.stderr)

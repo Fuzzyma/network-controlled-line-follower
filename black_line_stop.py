@@ -14,8 +14,6 @@ def main():
         if p.empty():
             continue
 
-        print("Some Package arrived", file=sys.stderr, flush=True)
-
         while not p.empty():
             msg = p.pullJSON()
             if msg["type"] == "CALIBRATION_DATA":
@@ -35,7 +33,7 @@ def main():
 
             if grey < 20:
                 # TODO: send speed instead of correction and do zero speed for 2 seconds
-                print("Black line detected. Stop for 2 secs", file=sys.stderr, flush=True)
+                # print("Black line detected. Stop for 2 secs", file=sys.stderr, flush=True)
                 p.pushJSON(Package(type="BLACK_LINE", ack=True).package)
             else:
                 p.pushJSON(msg["answer"])

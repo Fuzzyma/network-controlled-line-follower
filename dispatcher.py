@@ -10,7 +10,7 @@ import select
 import os
 import sys
 import time
-
+import operator
 
 debug = False
 
@@ -35,7 +35,7 @@ class NetworkFunction:
 
         # Open subprocess with network function and connected stdout to output of this nf
         # You can send data to every process by sending something to stdin
-        self.handle = Popen([sys.executable, self.executable], stdin=PIPE, stdout=PIPE, stderr=sys.stderr) #open("error.txt", 'a')
+        self.handle = Popen([sys.executable, self.executable], stdin=PIPE, stdout=PIPE, stderr=open("error.txt", 'a')) #
 
         # To read the stdout of the process we create a new thread
         self.thread = Thread(target=self.read_stdout, args=(self.handle.stdout, self.queue, self.executable))
@@ -229,6 +229,8 @@ def reread_nf_file(filename):
 
 reread_nf_file.nfs = []
 
+benchmark1 = []
+benchmark2 = []
 
 def main():
     sock = Socket()
@@ -272,6 +274,8 @@ def main():
         if not sock.receive():
             continue
 
+        benchmark1.append(time.time())
+
         data = sock.received
         if debug:
             print("Received data: ", data)
@@ -282,6 +286,8 @@ def main():
 
         if debug:
             print("Sending data", answer)
+
+        benchmark2.append(time.time())
 
         sock.sendWithEnsureCheck(answer)
 
@@ -303,4 +309,10 @@ if __name__ == '__main__':
                     main.sock.sendWithEnsureCheck(answer, timeout=2000)
                 except TimeoutError:
                     continue
+
+        result = map(operator.sub, benchmark2, benchmark1)
+        result = [i * 1000 for i in result]
+
+        print("Mean time:", sum(result) / float(len(result)), file=sys.stderr)
+        print("Max/Min:", max(result), '/', min(result), file=sys.stderr)
         sys.exit()

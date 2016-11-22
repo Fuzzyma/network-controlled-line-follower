@@ -7,10 +7,12 @@ import select
 
 
 if __name__ == '__main__':
-    from ev3con.linienverfolgung.control import MotorControl, BetterColorSensor
-    from constants import DEBUG, BOT_ADDR, AP_ADDR
+    from MotorControl import MotorControl
+    from ev3con.linienverfolgung.control import BetterColorSensor
+    from constants import DEBUG, BOT_ADDR, AP_ADDR, RIGHT_PORT, LEFT_PORT
 else:
-    from node.ev3con.linienverfolgung.control import MotorControl, BetterColorSensor
+    from node.ev3con.linienverfolgung.control import BetterColorSensor
+    from node.MotorControl import MotorControl
     from .constants import DEBUG, BOT_ADDR, AP_ADDR
 
 
@@ -58,18 +60,7 @@ class Bot:
         self.better_sensor_r = BetterColorSensor(port="4")
         # self.sensor.mode = u'COL-REFLECT'
 
-        # self.lMotor = ev3.LargeMotor('outD')
-        # self.rMotor = ev3.LargeMotor('outB')
-
-        self.mParams = {
-            "left_ports": "D",
-            "right_ports": "A",
-            "avg_speed": 500,
-            "margin_stop": 10,
-            "avg_stop": 10
-        }
-
-        self.motor = MotorControl(**self.mParams)
+        self.motor = MotorControl(RIGHT_PORT + LEFT_PORT)
 
         # setup socket
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -196,14 +187,14 @@ class Bot:
 
         return [white[0], black[0]]
 
-    def left(self, dv):
+    def left(self, speed):
         # self.lMotor.run_forever(speed_sp=speed)
-        self.motor.set_speed(dv, self.mParams["left_ports"])
+        self.motor.set_speed(speed, LEFT_PORT)
         return self
 
-    def right(self, dv):
+    def right(self, speed):
         # self.rMotor.run_forever(speed_sp=speed)
-        self.motor.set_speed(-dv, self.mParams["right_ports"])
+        self.motor.set_speed(speed, RIGHT_PORT)
         return self
 
     def stop(self):
@@ -218,7 +209,7 @@ class Bot:
         if self.corrections:
             return self.corrections[-1]["data"]
         else:
-            return 0
+            return [0, 0]
 
     def reset(self):
         self.motor.reset()
@@ -247,11 +238,11 @@ def main():
 
             b.send(b.getData(), "BENCHMARK")
             try:
-                dv = b.receive("BENCHMARK", timeout=50).getLastCorrection()
+                speed_left, speed_right = b.receive("BENCHMARK", timeout=50).getLastCorrection()
             except TimeoutError:
                 continue
             else:
-                b.left(dv).right(dv).stop()
+                b.left(speed_left).right(speed_right).stop()
 
             # benchmark2.append(time.time())
 

@@ -91,7 +91,8 @@ class AP:
             # Use non blocking methods (program flow will not get interrupted)
             self.sock.setblocking(True)
 
-        self.speed = 500
+        self.average_speed = 500
+
         self.received = {
             "id": 0,
             "data": None,
@@ -219,19 +220,19 @@ class AP:
         return self
 
     @property
-    def last_correction(self):
+    def last_data(self):
         if not len(self.data):
             return self.pid.grey_soll, self.pid.grey_soll
         else:
             return self.data[-1]["data"]
 
     def getCorrection(self):
-        try:
-            a = self.pid.dv(self.last_correction)
-        except BlackLineException:
-            self.forceStop()
-        else:
-            return a
+            a = self.pid.dv(self.last_data)
+
+            left = max(-1000, min(1000, self.average_speed + a))
+            right = max(-1000, min(1000, self.average_speed - a))
+
+            return [left, right]
 
     def forceStop(self):
         self.sendEnsured(type="BLACK_LINE", interval=200)

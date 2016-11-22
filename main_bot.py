@@ -27,7 +27,7 @@ def main():
             b.send(b.getData(), "DATA")
             try:
                 try:
-                    dv = b.receive("CONTROL", timeout=50).getLastCorrection()
+                    speed_left, speed_right = b.receive("CONTROL", timeout=50).getLastCorrection()
                 except BlackLineException:
                     b.stop().receive("GO")
                     benchmark_start.pop()
@@ -38,7 +38,7 @@ def main():
                 continue
             else:
                 benchmark_control.append(time.time())
-                b.left(dv).right(dv)
+                b.left(speed_left).right(speed_right)
 
             benchmark_stop.append(time.time())
 

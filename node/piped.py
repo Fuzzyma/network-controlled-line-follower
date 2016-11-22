@@ -20,6 +20,7 @@ class Piped:
         self.thread.start()
         self.closed = False
         signal.signal(signal.SIGTERM, self.sigterm_handler)
+        signal.signal(signal.SIGINT, self.sigterm_handler)
 
     @staticmethod
     def enqueue_from_source(source, queue):
@@ -27,7 +28,7 @@ class Piped:
             queue.put(line)
         source.close()
 
-    def sigterm_handler(self):
+    def sigterm_handler(self, a, b):
         self.closed = True
 
     def empty(self):
