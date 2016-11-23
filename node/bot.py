@@ -90,9 +90,8 @@ class Bot:
             "referer": None
         }  # data last received
 
-        self.corrections = []
+        self.correction = None
 
-        self.debug = DEBUG
         self.msgCnt = 0
 
     def tryReceive(self, type='CONTROL'):
@@ -110,11 +109,11 @@ class Bot:
         else:
             self.received = json.loads(payload.decode("utf-8"))
 
-            if self.debug:
+            if DEBUG >= 2:
                 print("Package:", self.received)
 
             if self.received["ack"]:
-                if self.debug:
+                if DEBUG >= 2:
                     print("Received ACK Request. Sending Answer")
                 self.send(type="ACK")
 
@@ -127,10 +126,15 @@ class Bot:
             if self.received["type"] == "BLACK_LINE":
                 raise BlackLineException
 
-            if self.received["type"] == 'CONTROL':
-                self.corrections.append(self.received)  # filter and sort!!!
+            if self.received["type"] == 'CONTROL' and self.received["time"] > self.correction["time"]:
+                if DEBUG:
+                    print("Package dropped")
+                return False
 
-            if self.received["type"] == 'ACK' and self.debug:
+            if self.received["type"] == 'CONTROL':
+                self.correction = self.received  # filter and sort!!!
+
+            if self.received["type"] == 'ACK' and DEBUG >= 2:
                 print("Received ACK")
 
             if self.received["type"] != type:
@@ -165,7 +169,7 @@ class Bot:
             "ack": ack
         }'''
 
-        if self.debug:
+        if DEBUG >= 2:
             print("Sending:", payload)
 
         self.sock.sendto(json.dumps(payload).encode('utf-8'), self.apCon)
@@ -195,7 +199,7 @@ class Bot:
         input("Press Enter to continue...")
         black = self.getData()
 
-        if self.debug:
+        if DEBUG:
             print("white: ", white)
             print("black: ", black)
 
@@ -220,8 +224,8 @@ class Bot:
         # return self.sensor.value()
 
     def getLastCorrection(self):
-        if self.corrections:
-            return self.corrections[-1]["data"]
+        if self.correction is not None:
+            return self.correction["data"]
         else:
             return [0, 0]
 
