@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from node.bot import Bot, TimeoutError, BlackLineException
+from node.bot import Bot, BlackLineException
 import time
 
 
