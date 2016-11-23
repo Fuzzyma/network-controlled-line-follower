@@ -44,12 +44,16 @@ class NetworkFunction:
         if self.pending_stop:
             return
 
-        # Wait for shield to be stopped from signal
         print("[!dispatcher.py ] Stopping", self.executable)
-        self.pipe.pushJSON(Package(type="SHUTDOWN").package)
-        self.pending_stop = True
-        self.handle.wait()
-        print("[!dispatcher.py ] Stopped", self.executable)
+
+        # check if process is still alive since CTRL+C kills all subprocesses no matter what
+        if self.handle.poll() is None:
+            self.pipe.pushJSON(Package(type="SHUTDOWN").package)
+            self.pending_stop = True
+            self.handle.wait()
+            print("[!dispatcher.py ] Stopped", self.executable)
+        else:
+            print("[!dispatcher.py ]", self.executable, "stopped already")
 
     @property
     def started(self):
@@ -345,8 +349,6 @@ def main():
 
             benchmark1.append(time.time())
 
-            print(list(map(lambda x: x.executable, nfs)))
-
             try:
                 for i in nfs:
                     i.write_stdin(data, answer)
@@ -379,6 +381,8 @@ def main():
                     sock.sendWithEnsureCheck(answer, timeout=2000)
                 except TimeoutError:
                     continue
+
+        time.sleep(0.4)
 
         try:
             sock.sendEnsured(Package(type="STOP", ack=True).package, timeout=2000)

@@ -5,6 +5,7 @@ import json
 import time
 import sys
 
+
 class Log:
     def __init__(self):
         self.base = time.time()
@@ -41,7 +42,7 @@ def main():
 
     l.add("Stopping Logger")
     l.close()
-    print("Stopping Logger", flush=True, file=sys.stderr)
+    print("[ logger.py ] Stopping Logger", flush=True, file=sys.stderr)
 
 
 if __name__ == "__main__":
@@ -49,4 +50,3 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         pass
-

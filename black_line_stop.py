@@ -65,4 +65,7 @@ def main():
     print("[ black_line_stop.py ] Shutdown ", file=sys.stderr, flush=True)
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass
