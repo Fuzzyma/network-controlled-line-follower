@@ -126,7 +126,7 @@ class Bot:
             if self.received["type"] == "BLACK_LINE":
                 raise BlackLineException
 
-            if self.received["type"] == 'CONTROL' and self.received["time"] > self.correction["time"]:
+            if self.received["type"] == 'CONTROL' and self.correction is not None and self.received["time"] > self.correction["time"]:
                 if DEBUG:
                     print("Package dropped")
                 return False
