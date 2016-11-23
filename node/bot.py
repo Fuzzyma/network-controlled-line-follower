@@ -20,7 +20,7 @@ class BlackLineException(RuntimeError):
     pass
 
 
-class time(base_time):
+class time:
     base_remote = 0
     base_local = 0
 
