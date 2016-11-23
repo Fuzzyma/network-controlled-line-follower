@@ -30,8 +30,9 @@ class time:
 
     @classmethod
     def set_base(cls, remote):
-        cls.base_remote = remote
-        cls.base_local = base_time.time()
+        if time.time() - remote < 0:
+            cls.base_remote = remote
+            cls.base_local = base_time.time()
 
 
 class Packet:

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-from node.bot import Bot, BlackLineException
-import time
+from node.bot import Bot, BlackLineException, time
 
 
 def main():

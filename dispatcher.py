@@ -267,12 +267,10 @@ def main():
         cnt = 0
 
         # Time Syncing
-        while cnt < 10:
+        while cnt < 100:
             try:
                 base = time.time()
-                sock.send(Package(type="TIME_SYNC", data=base, ack=True).package)
-
-                sock.receive(type="ACK", timeout=200)
+                sock.send(Package(type="PING", ack=True).package).receive(type="ACK", timeout=200)
                 received = time.time()
             except TimeoutError:
                 continue
@@ -283,20 +281,24 @@ def main():
         result = 0
 
         for i in time_sync:
-            result += i[1] - i[1]
+            result += i[1] - i[0]
 
         result /= len(time_sync)
 
-        print("[ Initialisation ] Ping-Pong needs [", result, "sec ] in average")
+        print("[ Initialisation ] Ping-Pong needs [", result*1000, "ms ] in average")
         print("[ Initialisation ] Setting Robot time...")
 
-        while True:
+        cnt = 0
+
+        while cnt < 10:
             try:
                 sock.send(Package(type="TIME", data=time.time()+result/2, ack=True).package).receive(type="ACK", timeout=200)
             except TimeoutError:
                 continue
             else:
-                print("[ Initialisation ] Robot Time set: ", sock.received["time"], "/ local Time is:", time.time())
+                cnt += 1
+                #sock.sendEnsured(Package(type="PING", ack=True).package)
+                #print("[ Initialisation ] Robot Time set. Difference is: ", (time.time() - (sock.received["time"] + result/2))*1000, 'ms')
                 break
 
         print("[ Initialisation ] Requesting Calibration...")
