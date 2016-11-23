@@ -37,10 +37,16 @@ def removeFunction(args, options):
         f.close()
 
 
+def showFunction(args, options):
+    with open('network_functions.txt', 'r', encoding='utf8') as f:
+        for i in f.readlines():
+                print(i.rstrip())
+
 
 commands = {
     "add": addFunction,
-    "rm": removeFunction
+    "rm": removeFunction,
+    "show": showFunction
 }
 
 

@@ -2,20 +2,18 @@
 
 import socket
 from subprocess import Popen, PIPE
-from node.constants import BOT_ADDR, AP_ADDR
+from node.constants import BOT_ADDR, AP_ADDR, DEBUG
 import json
-from queue import Queue, Empty
-from threading import Thread
 import select
 import os
 import sys
 import time
 import operator
+from node.piped import Piped
+from node.package import Package
 
-debug = False
 
-
-class TimeoutError(RuntimeError):
+class NoneException(Exception):
     pass
 
 
@@ -24,26 +22,34 @@ class NetworkFunction:
         self.executable = executable
         self.priority = priority
         self.handle = None
-        self.queue = Queue()
-        self.thread = None
+        self.pipe = None
+        self.pending_stop = False
+        self.final_package = None
 
-    def start(self):
+    def start(self, calibration):
         if self.started:
             return
 
-        print("Starting", self.executable)
+        print("[!dispatcher.py ] Starting", self.executable)
 
         # Open subprocess with network function and connected stdout to output of this nf
         # You can send data to every process by sending something to stdin
-        self.handle = Popen([sys.executable, self.executable], stdin=PIPE, stdout=PIPE, stderr=open("error.txt", 'a')) #
+        self.handle = Popen([sys.executable, self.executable], stdin=PIPE, stdout=PIPE, stderr=sys.stderr, bufsize=4000, universal_newlines=True) #open("error.txt", 'a')
 
-        # To read the stdout of the process we create a new thread
-        self.thread = Thread(target=self.read_stdout, args=(self.handle.stdout, self.queue, self.executable))
-        self.thread.daemon = True
-        self.thread.start()
+        self.pipe = Piped(source=self.handle.stdout, dest=self.handle.stdin, name="dispatcher.py -> "+self.executable)
+
+        self.write_stdin(calibration)
 
     def stop(self):
-        self.handle.terminate()
+        if self.pending_stop:
+            return
+
+        # Wait for shield to be stopped from signal
+        print("[!dispatcher.py ] Stopping", self.executable)
+        self.pipe.pushJSON(Package(type="SHUTDOWN").package)
+        self.pending_stop = True
+        self.handle.wait()
+        print("[!dispatcher.py ] Stopped", self.executable)
 
     @property
     def started(self):
@@ -57,52 +63,54 @@ class NetworkFunction:
             return self.executable == other.executable
 
     def write_stdin(self, payload, answer=None):
-        '''
+        """
         Sends a payload to stdin of a nf process.
 
         :param payload: Data string to be send
         :param answer: Result of the network functions before this one
         :return: None
-        '''
+        """
+
+        if self.pending_stop:
+            return
 
         payload["answer"] = answer
 
-        if debug:
-            print("We send to", self.executable + ':', (json.dumps(payload) + '\n').encode('utf8'), "...")
-        self.handle.stdin.write((json.dumps(payload) + '\n').encode('utf8'))
-        self.handle.stdin.flush()
+        if DEBUG:
+            print("[!dispatcher.py ] We send to", self.executable + ':', json.dumps(payload))
 
-    @staticmethod
-    def read_stdout(out, queue, executable):
-        '''
-        Read the output of stdout and add it to queue
-
-        :param out: stdout from the nf process
-        :param queue: queue the data are added to
-        :param executable: name of the process running
-        :return: None
-        '''
-        for line in iter(out.readline, b''):
-            if debug:
-                print("We read from", executable + ':', line, "...")
-                print("We made it to", line.decode('utf8').rstrip(), '...')
-            queue.put(json.loads(line.decode('utf8').rstrip()))
-        out.close()
+        self.pipe.pushJSON(payload)
 
     def get_answer(self, timeout=None):
+        if self.final_package is not None:
+            return self.final_package
+
+        answer = self.pipe.pullJSON(timeout=timeout)
+        if answer is None:
+            raise NoneException
+        if answer["last"]:
+            self.final_package = answer
+
+        return answer
+
+    def get_last_answer(self, timeout=None):
+        if self.final_package is not None:
+            return self.final_package
+
         base = time.time()
+
         while True:
-            try:
-                line = self.queue.get_nowait()  # or q.get(timeout=.1)
-            except Empty:
-                if timeout is not None and base + timeout/1000.0 < time.time():
-                    raise TimeoutError
-                continue
-            else:
-                return line
+            if timeout is not None and base + timeout/1000.0 < time.time():
+                raise TimeoutError
+            answer = self.pipe.pullJSON(timeout=timeout)
+            if answer is None:
+                raise NoneException
+            if answer["last"]:
+                self.final_package = answer
+                return answer
 
     def has_answer(self):
-        return not self.queue.empty()
+        return not self.pipe.empty()
 
     @classmethod
     def readFromFile(cls, filename):
@@ -134,6 +142,8 @@ class Socket:
         }  # data last received
 
     def send(self, data):
+        if DEBUG >= 2:
+            print("[!dispatcher.py ] Sending data", data)
         self.sock.sendto(json.dumps(data).encode('utf-8'), BOT_ADDR)
         return self
 
@@ -195,7 +205,19 @@ class Socket:
                 raise TimeoutError
             continue
 
+        if DEBUG >= 2:
+            print("[!dispatcher.py ] Received data: ", self.received)
+
         return self
+
+    def calibrate(self):
+        calibration_data = self.sendEnsured(Package(type='CALIBRATION_REQUEST', ack=True).package).receive('CALIBRATION_DATA').received
+        calibration_data["ack"] = False
+        # self.midpoint = (white - black) / 2 + black
+
+        if DEBUG:
+            print("[!dispatcher.py ] Got calibration data:", calibration_data)
+        return calibration_data
 
 
 def nf_file_was_changed(filename):
@@ -208,13 +230,13 @@ def nf_file_was_changed(filename):
 nf_file_was_changed.time = 0
 
 
-def reread_nf_file(filename):
+def reread_nf_file(filename, calibration):
 
     res = []
 
     for d in NetworkFunction.readFromFile(filename):
         if d not in reread_nf_file.nfs:
-            d.start()
+            d.start(calibration)
             res.append(d)
         else:
             res.append(reread_nf_file.nfs[reread_nf_file.nfs.index(d)])
@@ -232,87 +254,97 @@ reread_nf_file.nfs = []
 benchmark1 = []
 benchmark2 = []
 
+
 def main():
+    # sig = SIG()
+
+    nfs = []
     sock = Socket()
 
-    main.sock = sock
+    try:
 
-    filename = "network_functions.txt"
+        calibration = sock.calibrate()
 
-    print("Reading", filename)
-    nf_file_was_changed(filename)
-    nfs = reread_nf_file(filename)
-    print("Got", len(nfs), "network functions")
-    print(list(map(lambda x: x.executable, nfs)))
+        filename = "network_functions.txt"
 
-    # Initialisation
-    # Check if any process want to say something
-    for i in nfs:
-        print("Getting answer from", i.executable)
-        try:
-            answer = i.get_answer(timeout=1000)
-        except TimeoutError:
-            print(i.executable, "has nothing to say")
-            continue
-        else:
-            print("Sending:", answer)
-            sock.sendWithEnsureCheck(answer)
+        nf_file_was_changed(filename)
+        nfs = reread_nf_file(filename, calibration)
+        new = nfs
+        print("[!dispatcher.py ] Got", len(nfs), "network functions:", list(map(lambda x: x.executable, nfs)))
 
-    print("Starting main loop")
+        print("[!dispatcher.py ] Starting main loop")
 
-    while True:
-        if not sock.is_readable():
-            if nf_file_was_changed(filename):
-                print(filename, "was changed. Updating...")
-                nfs = reread_nf_file(filename)
-                print("Got", len(nfs), "network functions")
-                print(list(map(lambda x: x.executable, nfs)))
-            continue
+        while True:
+            if not sock.is_readable():
+                if nf_file_was_changed(filename):
+                    print("[!dispatcher.py ]", filename, "was changed. Updating...")
+                    new = reread_nf_file(filename, calibration)
+                    print("[!dispatcher.py ] Got", len(new), "network functions", list(map(lambda x: x.executable, new)))
+                continue
 
-        answer = None
+            answer = None
 
-        if not sock.receive():
-            continue
+            # Continue if nothing was received
+            if not sock.receive():
+                continue
 
-        benchmark1.append(time.time())
+            # Continue if no network function was found
+            if not len(nfs):
+                nfs = new
+                continue
 
-        data = sock.received
-        if debug:
-            print("Received data: ", data)
+            data = sock.received
+
+            benchmark1.append(time.time())
+
+            print(list(map(lambda x: x.executable, nfs)))
+
+            try:
+                for i in nfs:
+                    i.write_stdin(data, answer)
+                    answer = i.get_answer(timeout=50)
+            except (NoneException, TimeoutError) as i:
+                if DEBUG:
+                    print("[!dispatcher.py ] No answer from nfs or timeout", i)
+                nfs = new
+                continue
+
+            benchmark2.append(time.time())
+
+            sock.sendWithEnsureCheck(Package.clean(answer))
+
+            nfs = new
+    except KeyboardInterrupt:
+        print("[!dispatcher.py ] Stop dispatcher")
 
         for i in nfs:
-            i.write_stdin(data, answer)
-            answer = i.get_answer()
-
-        if debug:
-            print("Sending data", answer)
-
-        benchmark2.append(time.time())
-
-        sock.sendWithEnsureCheck(answer)
-
-main.sock = None
-
-if __name__ == '__main__':
-    try:
-        main()
-    except KeyboardInterrupt:
-        for i in reread_nf_file.nfs:
             i.stop()
             try:
-                answer = i.get_answer(timeout=1000)
-                print(answer)
-            except TimeoutError:
+                print("[!dispatcher.py ] Getting last answer from", i.executable)
+                answer = i.get_last_answer(timeout=1000)
+            except (NoneException, TimeoutError) as i:
+                print("[!dispatcher.py ] No answer from nfs or timeout", i)
                 continue
             else:
                 try:
-                    main.sock.sendWithEnsureCheck(answer, timeout=2000)
+                    print("[!dispatcher.py ] Sending last message:", answer)
+                    sock.sendWithEnsureCheck(answer, timeout=2000)
                 except TimeoutError:
                     continue
+
+        try:
+            sock.sendEnsured(Package(type="STOP", ack=True).package, timeout=2000)
+        except TimeoutError:
+            pass
 
         result = map(operator.sub, benchmark2, benchmark1)
         result = [i * 1000 for i in result]
 
-        print("Mean time:", sum(result) / float(len(result)), file=sys.stderr)
-        print("Max/Min:", max(result), '/', min(result), file=sys.stderr)
+        if len(result):
+            print("Mean time:", sum(result) / float(len(result)))
+            print("Max/Min:", max(result), '/', min(result),)
+
         sys.exit()
+
+if __name__ == '__main__':
+    main()

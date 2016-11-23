@@ -9,18 +9,10 @@ import sys
 
 if __name__ == '__main__':
     from ev3con.linienverfolgung.pid import PID as BasePID
-    from constants import DEBUG, BOT_ADDR, AP_ADDR
+    from constants import DEBUG, BOT_ADDR, AP_ADDR, ShutdownException
 else:
     from node.ev3con.linienverfolgung.pid import PID as BasePID
-    from .constants import DEBUG, BOT_ADDR, AP_ADDR
-
-
-class TimeoutError(RuntimeError):
-    pass
-
-
-class BlackLineException(RuntimeError):
-    pass
+    from .constants import DEBUG, BOT_ADDR, AP_ADDR, ShutdownException
 
 
 class PID(BasePID):
@@ -40,38 +32,18 @@ class PID(BasePID):
         self.threshold_white = 220
 
     def dv(self, grey):
-        """noetige Geschwindigkeitsaenderung"""
+        """
+        Calculate needed speed change
+        :param grey:
+        :return: speed
+        """
 
         try:
             grey_l = ((grey[0] - self.black) / (self.white - self.black)) * 255
             grey_r = ((grey[1] - self.black) / (self.white - self.black)) * 255
-
-            grey = (grey_l + grey_r) / 2
-            #if grey < 20:
-            #    print("Black line detected. Stop motors immediately")
-            #    raise BlackLineException
-
-            '''
-            if grey[0] < self.last_darkest_value:
-                self.last_darkest_value = grey[0]
-                self.last_darkest_side = 'left'
-
-            if grey[1] < self.last_darkest_value:
-                self.last_darkest_value = grey[1]
-                self.last_darkest_side = 'right'
-
-            # print(grey_l, grey_r)
-
-            if grey > self.threshold_white:
-                print("White detected")
-                if self.last_darkest_side == 'left':
-                    grey_l += 30
-                elif self.last_darkest_side == 'right':
-                    grey_r += 30
-            '''
         except ZeroDivisionError:
             print("Calibration failed", file=sys.stderr)
-            raise KeyboardInterrupt
+            sys.exit()
         speed = self.calc(grey_l-grey_r, self.grey_soll)
         # speed = self.calc(grey, self.grey_soll)
 
@@ -99,17 +71,14 @@ class AP:
             "ack": False,
             "time": 0,
             "type": None,
-            "referer": None
+            "referer": None,
+            "last": False
         }  # data last received
 
-        self.pid = None  # PID(1.4, 0.01, -5)
+        self.pid = None
 
         self.data = []
-
-        self.debug = DEBUG
         self.msgCnt = 0
-
-        self.midpoint = 127.5
 
         self.history = {}
 
@@ -132,30 +101,31 @@ class AP:
         if not self.receive_implementation():
             return False
 
-        if self.debug:
+        if DEBUG >= 3:
             print("Package:", self.received)
 
         # Ack is handled by dispatcher now
         if self.received["ack"]:
-            if self.debug:
+            if DEBUG >= 3:
                 print("Received ACK Request. Sending Answer")
             self.send(type="ACK")
-
 
         if self.received["type"] == 'DATA':
             self.data.append(self.received)  # filter and sort!!!
 
-        if self.received["type"] == 'ACK' and self.debug:
+        if self.received["type"] == 'ACK' and DEBUG >= 3:
             print("Received ACK")
+
+        if self.received["type"] == 'CALIBRATION_DATA':
+            white, black = self.received["data"]
+            self.pid = PID(0.2, 5, 5, white, black, antiwindup=5, maxval=500)
+
+        if self.received["type"] == 'SHUTDOWN':
+            raise ShutdownException
 
         if self.received["type"] != type:
             return False
         return True
-
-    '''def checkSock(self):
-        readable, writable, exceptional = select.select([self.sock], [], [self.sock])
-        return not not readable
-    '''
 
     def receive(self, type='DATA', timeout=None):
         start = time.time()
@@ -172,7 +142,7 @@ class AP:
         self.sock.sendto(payload.encode('utf-8'), self.botCon)
         return self
 
-    def send(self, data=None, type='CONTROL', ack=False):
+    def send(self, data=None, type='CONTROL', ack=False, last=False):
         self.msgCnt += 1
         payload = {
             "time": time.time(),
@@ -180,26 +150,25 @@ class AP:
             "data": data,
             "id": self.msgCnt,
             "referer": self.received["id"],
-            "ack": ack
+            "ack": ack,
+            "last": last
         }
 
-        if self.debug:
+        if DEBUG >= 3:
             print("Sending:", payload)
 
         self.history[self.msgCnt] = payload
-
-        # self.sock.sendto(json.dumps(payload).encode('utf-8'), self.botCon)
 
         self.send_implementation(json.dumps(payload))
 
         return self
 
-    def sendEnsured(self, data=None, type='CONTROL', timeout=None, interval=1000):
+    def sendEnsured(self, data=None, type='CONTROL', timeout=None, interval=1000, last=False):
         start = time.time()
 
         while True:
             try:
-                self.send(data, type, ack=True).receive('ACK', interval)
+                self.send(data, type, ack=True, last=last).receive('ACK', interval)
                 break
             except TimeoutError:
                 if timeout is not None and time.time() - start > timeout / 1000.0:
@@ -215,7 +184,7 @@ class AP:
         # Holy grail of control parameters
         self.pid = PID(0.2, 5, 5, white, black, antiwindup=5, maxval=500)
 
-        if self.debug:
+        if DEBUG >= 3:
             print("Got calibration data: White [", white, "], Black [", black, "]")
         return self
 

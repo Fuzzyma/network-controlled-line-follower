@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-from node.piped import Piped
+from node.piped import Piped, SIG
 import json
 import time
-
+import sys
 
 class Log:
     def __init__(self):
@@ -21,20 +21,27 @@ class Log:
 
 
 def main():
-    p = Piped()
+    p = Piped(name="logger.py")
     l = Log()
+    sig = SIG()
 
-    while not p.closed:
+    while not sig.closed:
         if p.empty():
             continue
 
         while not p.empty():
             msg = p.pullJSON()
+            if msg["type"] == "CALIBRATION_DATA":
+                continue
             p.repush(msg)
             l.add(json.dumps(msg))
+            if msg["type"] == "SHUTDOWN":
+                sig.closed = True
+                break
 
     l.add("Stopping Logger")
     l.close()
+    print("Stopping Logger", flush=True, file=sys.stderr)
 
 
 if __name__ == "__main__":

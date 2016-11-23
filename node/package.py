@@ -11,8 +11,20 @@ class Package:
         "time": 0,
         "type": None,
         "referer": None,
-        "answer": None
+        "answer": None,
+        "last": False
     }
+
+    clean_ = {
+        "id": 0,
+        "data": None,
+        "ack": False,
+        "time": 0,
+        "type": None,
+        "referer": None,
+    }
+
+    id = 0
 
     def __init__(self, type=None, data=None, referer=None, ack=False, answer=None):
         self.package["type"] = type
@@ -23,3 +35,12 @@ class Package:
         self.package["ack"] = ack
         self.package["answer"] = answer
 
+    @classmethod
+    def clean(cls, package):
+        for i in package:
+            if i in cls.clean_:
+                cls.clean_[i] = package[i]
+
+        cls.id += 1
+        cls.clean_["id"] = cls.id
+        return cls.clean_

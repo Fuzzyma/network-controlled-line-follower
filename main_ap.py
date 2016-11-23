@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 
-from node.ap import AP as BaseAP, TimeoutError
+from node.ap import AP as BaseAP
 import time
 import operator
 import sys
 import json
 from queue import Queue, Empty
 from threading import Thread
-import signal
+from node.constants import DEBUG, ShutdownException
+from node.piped import SIG
+
 
 class AP(BaseAP):
     def __init__(self):
@@ -18,6 +20,8 @@ class AP(BaseAP):
         self.thread.start()
 
     def send_implementation(self, payload):
+        if DEBUG >= 2:
+            print("[main_ap.py] Sending:", payload, flush=True, file=sys.stderr)
         print(payload, flush=True)
         return self
 
@@ -33,38 +37,33 @@ class AP(BaseAP):
         except Empty:
             return False
         else:  # got line
+            if DEBUG >= 2:
+                print("[main_ap.py] received", line, flush=True, file=sys.stderr)
             self.received = json.loads(line)
             return True
 
     # Overwrite sendEnsured since that functionality is provided by the dispatcher
-    def sendEnsured(self, data=None, type='CONTROL', timeout=None, interval=1000):
-        return self.send(data, type, ack=True)
+    def sendEnsured(self, data=None, type='CONTROL', timeout=None, interval=1000, last=False):
+        return self.send(data, type, ack=True, last=last)
 
-
-shutdown = False
-
-def sigterm_handler(a, b, c):
-    shutdown = True
 
 def main():
+
+    sig = SIG()
+
     if len(sys.argv) > 1 and sys.argv[1] == 'socket':
         ap = BaseAP()
+        print("[ main_ap.py ] Requesting Calibration", file=sys.stderr)
+        ap.calibrate()
     else:
         ap = AP()
 
     benchmark_start = []
     benchmark_stop = []
 
-    signal.signal(signal.SIGTERM, sigterm_handler)
-    signal.signal(signal.SIGINT, sigterm_handler)
-
     try:
-        print("Requesting Calibration", file=sys.stderr)
-        ap.calibrate()
+        while not sig.closed:
 
-        while True:
-            if shutdown:
-                raise KeyboardInterrupt
             benchmark_start.append(time.time())
             try:
                 ap.receive("DATA", timeout=100).send(ap.getCorrection(), "CONTROL")
@@ -72,22 +71,25 @@ def main():
                 benchmark_start.pop()
                 continue
             benchmark_stop.append(time.time())
-    except KeyboardInterrupt:
-        try:
-            ap.sendEnsured(type="STOP", timeout=2000)
-        except TimeoutError:
-            pass
+    except ShutdownException:
+        pass
 
-        if not len(benchmark_start):
-            return
+    print("[ main_ap.py] Shutdown", file=sys.stderr)
+    try:
+        ap.sendEnsured(type="CONTROL", data=[0, 0], timeout=2000, last=True)
+    except TimeoutError:
+        pass
 
-        result = map(operator.sub, benchmark_stop, benchmark_start)
-        result = [i * 1000 for i in result]
+    if not len(benchmark_start):
+        return
 
-        print("Mean time:", sum(result) / float(len(result)), file=sys.stderr)
-        print("Max/Min:", max(result), '/', min(result), file=sys.stderr)
+    result = map(operator.sub, benchmark_stop, benchmark_start)
+    result = [i * 1000 for i in result]
 
-        sys.exit()
+    print("[ main_ap.py] Mean time:", sum(result) / float(len(result)), file=sys.stderr)
+    print("[ main_ap.py] Max/Min:", max(result), '/', min(result), file=sys.stderr)
+
+    sys.exit()
 
 
 if __name__ == '__main__':

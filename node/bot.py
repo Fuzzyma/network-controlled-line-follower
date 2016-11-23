@@ -16,10 +16,6 @@ else:
     from .constants import DEBUG, BOT_ADDR, AP_ADDR, RIGHT_PORT, LEFT_PORT
 
 
-class TimeoutError(RuntimeError):
-    pass
-
-
 class BlackLineException(RuntimeError):
     pass
 
