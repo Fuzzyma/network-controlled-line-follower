@@ -290,16 +290,24 @@ def main():
 
         cnt = 0
 
-        while cnt < 10:
+        while cnt < 100:
             try:
-                sock.send(Package(type="TIME", data=time.time()+result/2, ack=True).package).receive(type="ACK", timeout=200)
+                sock.send(Package(type="TIME", data=time.time()+result, ack=True).package).receive(type="ACK", timeout=200)
             except TimeoutError:
                 continue
             else:
                 cnt += 1
-                #sock.sendEnsured(Package(type="PING", ack=True).package)
-                #print("[ Initialisation ] Robot Time set. Difference is: ", (time.time() - (sock.received["time"] + result/2))*1000, 'ms')
                 break
+
+        cnt = 0
+        time_sync = []
+
+        while cnt < 100:
+            sock.sendEnsured(Package(type="PING", ack=True).package)
+            time_sync.append((time.time() - (sock.received["time"]))*1000)
+            cnt += 1
+
+        print("[ Initialisation ] Robot Time set. Minimum difference is: ", min(time_sync), 'ms')
 
         print("[ Initialisation ] Requesting Calibration...")
         calibration = sock.calibrate()
