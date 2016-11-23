@@ -263,7 +263,45 @@ def main():
 
     try:
 
+        time_sync = []
+        cnt = 0
+
+        # Time Syncing
+        while cnt < 10:
+            try:
+                base = time.time()
+                sock.send(Package(type="TIME_SYNC", data=base, ack=True).package)
+
+                sock.receive(type="ACK", timeout=200)
+                received = time.time()
+            except TimeoutError:
+                continue
+            else:
+                time_sync.append([base, received])
+                cnt += 1
+
+        result = 0
+
+        for i in time_sync:
+            result += i[1] - i[1]
+
+        result /= len(time_sync)
+
+        print("[ Initialisation ] Ping-Pong needs [", result, "sec ] in average")
+        print("[ Initialisation ] Setting Robot time...")
+
+        while True:
+            try:
+                sock.send(Package(type="TIME", data=time.time()+result/2, ack=True).package).receive(type="ACK", timeout=200)
+            except TimeoutError:
+                continue
+            else:
+                print("[ Initialisation ] Robot Time set: ", sock.received["time"], "/ local Time is:", time.time())
+                break
+
+        print("[ Initialisation ] Requesting Calibration...")
         calibration = sock.calibrate()
+        print("[ Initialisation ] Requesting Done: ", calibration)
 
         filename = "network_functions.txt"
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import socket
-import time
+import time as base_time
 import json
 import select
 
@@ -18,6 +18,20 @@ else:
 
 class BlackLineException(RuntimeError):
     pass
+
+
+class time(base_time):
+    base_remote = 0
+    base_local = 0
+
+    @classmethod
+    def time(cls):
+        return base_time.time() - cls.base_local + cls.base_remote
+
+    @classmethod
+    def set_base(cls, remote):
+        cls.base_remote = remote
+        cls.base_local = base_time.time()
 
 
 class Packet:
@@ -102,6 +116,9 @@ class Bot:
                 if self.debug:
                     print("Received ACK Request. Sending Answer")
                 self.send(type="ACK")
+
+            if self.received["type"] == "TIME":
+                time.set_base(self.received["data"])
 
             if self.received["type"] == "STOP":
                 raise KeyboardInterrupt
