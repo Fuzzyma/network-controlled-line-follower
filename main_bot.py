@@ -5,8 +5,8 @@ from node.bot import Bot, BlackLineException, time
 
 def main():
     b = Bot().reset()
-    print("Calibrate")
-    b.calibrate()
+    # print("Calibrate")
+    # b.calibrate()
 
     input("Press Enter to start")
 
@@ -32,6 +32,7 @@ def main():
                     benchmark_start.pop()
                     continue
             except TimeoutError:
+                b.zero()
                 dropped_packages += 1
                 benchmark_start.pop()
                 continue

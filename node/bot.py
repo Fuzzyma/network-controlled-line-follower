@@ -129,7 +129,6 @@ class Bot:
             if self.received["type"] == 'CONTROL' and time.time() - self.received["time"] > 0.05:
                 if DEBUG:
                     print("Package dropped")
-                self.zero()
                 return False
 
             if self.received["type"] == 'CONTROL':
@@ -137,6 +136,11 @@ class Bot:
 
             if self.received["type"] == 'ACK' and DEBUG >= 2:
                 print("Received ACK")
+
+            if self.received["type"] == 'CALIBRATION_REQUEST':
+                self.zero()
+                print("Calibrating")
+                self.sendEnsured(self.getCalibrationData(), 'CALIBRATION_DATA')
 
             if self.received["type"] != type:
                 return False
