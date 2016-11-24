@@ -143,7 +143,7 @@ class Bot:
                     print("Calibrating")
                     self.sendEnsured(self.getCalibrationData(), 'CALIBRATION_DATA')
 
-                if type == 'CALIBRATION_DATA':
+                if type == 'CALIBRATION_REQUEST':
                     return True
 
             if self.received["type"] != type:
