@@ -86,8 +86,9 @@ def main():
     result = map(operator.sub, benchmark_stop, benchmark_start)
     result = [i * 1000 for i in result]
 
-    print("[ main_ap.py] Mean time:", sum(result) / float(len(result)), file=sys.stderr)
-    print("[ main_ap.py] Max/Min:", max(result), '/', min(result), file=sys.stderr)
+    if len(result):
+        print("[ main_ap.py] Mean time:", sum(result) / float(len(result)), file=sys.stderr)
+        print("[ main_ap.py] Max/Min:", max(result), '/', min(result), file=sys.stderr)
 
     sys.exit()
 
