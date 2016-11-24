@@ -138,9 +138,10 @@ class Bot:
                 print("Received ACK")
 
             if self.received["type"] == 'CALIBRATION_REQUEST':
-                self.zero()
-                print("Calibrating")
-                self.sendEnsured(self.getCalibrationData(), 'CALIBRATION_DATA')
+                if not self.received["data"]:
+                    self.zero()
+                    print("Calibrating")
+                    self.sendEnsured(self.getCalibrationData(), 'CALIBRATION_DATA')
 
             if self.received["type"] != type:
                 return False
@@ -254,7 +255,12 @@ class Bot:
 
 def main():
     b = Bot()
-    b.calibrate()
+
+    # two possible outcomes:
+    # AP has data and sends request with data = True
+    # AP has no data and sends request with data = False
+    # In any case we have to wait for it to start
+    b.receive("CALIBRATION_REQUEST")
 
     i = 0.0
     start = time.time()

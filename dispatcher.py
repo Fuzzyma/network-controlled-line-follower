@@ -214,8 +214,12 @@ class Socket:
 
         return self
 
+    def have_calibration(self):
+        self.sendEnsured(Package(type='CALIBRATION_REQUEST', ack=True, data=True))
+        return self
+
     def calibrate(self):
-        calibration_data = self.sendEnsured(Package(type='CALIBRATION_REQUEST', ack=True).package).receive('CALIBRATION_DATA').received
+        calibration_data = self.sendEnsured(Package(type='CALIBRATION_REQUEST', ack=True, data=False).package).receive('CALIBRATION_DATA').received
         calibration_data["ack"] = False
         # self.midpoint = (white - black) / 2 + black
 

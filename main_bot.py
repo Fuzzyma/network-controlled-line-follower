@@ -5,8 +5,12 @@ from node.bot import Bot, BlackLineException, time
 
 def main():
     b = Bot().reset()
-    # print("Calibrate")
-    # b.calibrate()
+
+    # two possible outcomes:
+    # AP has data and sends request with data = True
+    # AP has no data and sends request with data = False
+    # In any case we have to wait for it to start
+    b.receive("CALIBRATION_REQUEST")
 
     input("Press Enter to start")
 
