@@ -129,6 +129,7 @@ class Bot:
             if self.received["type"] == 'CONTROL' and time.time() - self.received["time"] > 0.05:
                 if DEBUG:
                     print("Package dropped")
+                self.zero()
                 return False
 
             if self.received["type"] == 'CONTROL':
@@ -217,6 +218,11 @@ class Bot:
 
     def stop(self):
         self.motor.stop()
+        return self
+
+    def zero(self):
+        self.motor.set_speed(0, LEFT_PORT)
+        self.motor.set_speed(0, RIGHT_PORT)
         return self
 
     def getData(self):
