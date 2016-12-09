@@ -25,16 +25,18 @@ def addFunction(args, options):
 def removeFunction(args, options):
 
     filename = args[0]
+    try:
+        with open('network_functions.txt', 'r+', encoding='utf8') as f:
+            d = f.readlines()
+            f.seek(0)
+            for i in d:
+                if i.rstrip('\n').split('\t')[0] != filename:
+                    f.write(i)
 
-    with open('network_functions.txt', 'r+', encoding='utf8') as f:
-        d = f.readlines()
-        f.seek(0)
-        for i in d:
-            if i.rstrip('\n').split('\t')[0] != filename:
-                f.write(i)
-
-        f.truncate()
-        f.close()
+            f.truncate()
+            f.close()
+    except FileNotFoundError:
+        pass
 
 
 def showFunction(args, options):

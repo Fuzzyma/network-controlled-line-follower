@@ -128,7 +128,7 @@ class Bot:
 
             if self.received["type"] == 'CONTROL' and time.time() - self.received["time"] > 0.05:
                 if DEBUG:
-                    print("Package dropped")
+                    print("Package dropped.", (time.time() - self.received["time"] - 0.05)*1000, 'ms late')
                 return False
 
             if self.received["type"] == 'CONTROL':
