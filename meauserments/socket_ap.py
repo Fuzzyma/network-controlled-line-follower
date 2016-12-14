@@ -25,11 +25,10 @@ msgs = []
 for d in range(1000):
     msgs.append(''.join(random.choice(string.ascii_uppercase) for _ in range(50)))
 
+while True:
+    for d in msgs:
+        sock.sendto(d.encode('utf-8'), BOT_ADDR)
+        #print(d)
+        #time.sleep(0.1)
 
-while d in msgs:
-    sock.sendto(d.encode('utf-8'), BOT_ADDR)
-    time.sleep(0.1)
-
-
-print("Socket needed", (end-start), "ms in average to send a message")
 

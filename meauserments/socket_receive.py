@@ -34,8 +34,6 @@ while True:
         continue
     else:
         received = payload
-        print("got", received)
-
 
     end = time.time()
 
