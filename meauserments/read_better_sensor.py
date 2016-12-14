@@ -6,7 +6,7 @@ import time
 
 sys.path.append("..")
 
-from node.ev3con.linienverfolgung.control import BetterColorSensor
+from node.ColorSensor import ColorSensor
 
 try:
     ports = sys.argv[1]
@@ -17,9 +17,8 @@ sensors = {}
 
 for i in ports:
     port = "in" + i
-    temp = BetterColorSensor(port=i)
+    temp = ColorSensor(port=i, mode=ColorSensor.MODE_COL_REFLECT)
     if temp.connected:
-        temp.mode = ColorSensor.MODE_RGB_RAW
         sensors[i] = temp
 
 
