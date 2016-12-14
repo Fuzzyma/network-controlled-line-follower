@@ -5,7 +5,7 @@ import sys
 import time
 
 try:
-    ports = sys.argv[0]
+    ports = sys.argv[1]
 except IndexError:
     ports = 'ABCD'
 
