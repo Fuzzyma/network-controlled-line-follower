@@ -30,7 +30,7 @@ for i in sensors:
     print("Measure sensor at port", port)
     start = time.time()
     for cnt in range(1000):
-        r = sensors[i].grey_avg
+        r = sensors[i].grey
     end = time.time()
     print("Sensor", port, "needed", (end-start), "ms in average")
 
@@ -41,7 +41,7 @@ start = time.time()
 
 for cnt in range(1000):
     for i in sensors:
-        r = sensors[i].grey_avg
+        r = sensors[i].grey
 end = time.time()
 
 print("Sensors needed", (end-start), "ms in average")
