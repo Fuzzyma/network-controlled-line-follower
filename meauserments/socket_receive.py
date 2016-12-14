@@ -3,6 +3,9 @@
 import socket
 import time
 import select
+
+sys.path.append("..")
+
 from node.constants import BOT_ADDR
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
