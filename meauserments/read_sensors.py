@@ -12,23 +12,25 @@ except IndexError:
 sensors = {}
 
 for i in ports:
-    temp = ColorSensor(address=i)
+    port = "in" + i
+    temp = ColorSensor(address=port)
     if temp.connected:
-        temp.mode = 'RGB-RAW'
+        temp.mode = ColorSensor.MODE_RGB_RAW
         sensors[i] = temp
 
 
 print("running measurements...")
 
 for i in sensors:
-    print("Measure port", "in"+i)
+    port = "in" + i
+    print("Measure port", port)
     start = time.time()
     for cnt in range(1000):
         r = sensors[i].value(0)
         g = sensors[i].value(1)
         b = sensors[i].value(2)
     end = time.time()
-    print("Sensor", i, "needed", (end-start), "ms in average")
+    print("Sensor", port, "needed", (end-start), "ms in average")
 
 
 print("Measure all ports together")

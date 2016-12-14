@@ -12,7 +12,8 @@ except IndexError:
 motors = {}
 
 for i in ports:
-    temp = LargeMotor(address=i)
+    port = "out" + i
+    temp = LargeMotor(address=port)
     if temp.connected:
         motors[i] = temp
 
@@ -20,12 +21,13 @@ for i in ports:
 print("running measurements...")
 
 for i in motors:
-    print("Measure port", "out"+i)
+    port = "out" + i
+    print("Measure port", port)
     start = time.time()
     for cnt in range(1000):
         motors[i].run_direct(speed_sp=cnt)
     end = time.time()
-    print("Sensor", i, "needed", (end-start), "ms in average")
+    print("Sensor", port, "needed", (end-start), "ms in average")
 
 
 print("Measure all ports together")
