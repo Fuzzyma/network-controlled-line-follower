@@ -23,7 +23,7 @@ print("running measurements...")
 
 for i in sensors:
     port = "in" + i
-    print("Measure port", port)
+    print("Measure sensor at port", port)
     start = time.time()
     for cnt in range(1000):
         r = sensors[i].value(0)
@@ -33,7 +33,7 @@ for i in sensors:
     print("Sensor", port, "needed", (end-start), "ms in average")
 
 
-print("Measure all ports together")
+print("Measure all sensors together")
 
 start = time.time()
 
@@ -44,4 +44,4 @@ for cnt in range(1000):
         b = sensors[i].value(2)
 end = time.time()
 
-print("Sensor", i, "needed", (end-start), "ms in average")
+print("Sensors needed", (end-start), "ms in average")
