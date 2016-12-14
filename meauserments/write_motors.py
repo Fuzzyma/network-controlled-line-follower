@@ -24,10 +24,12 @@ for i in motors:
     port = "out" + i
     print("Measure motor at port", port)
     start = time.time()
-    for cnt in range(1000):
-        motors[i].run_forever(speed_sp=cnt, speed_regulation=True)
+    for cnt in range(2000):
+        motors[i].run_forever(speed_sp=cnt-1000, speed_regulation=True)
+    for cnt in range(2000):
+        motors[i].run_forever(speed_sp=1000-cnt, speed_regulation=True)
     end = time.time()
-    print("Motor", port, "needed", (end-start), "ms in average")
+    print("Motor", port, "needed", (end-start)/4, "ms in average")
 
 
 print("Measure all motors together")
