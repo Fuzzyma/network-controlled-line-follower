@@ -15,7 +15,7 @@ def main():
 
     input("Press Enter to start")
 
-    # i = 0.0
+    i = 0.0
     dropped_packages = 0
     start = time.time()
 
@@ -26,7 +26,7 @@ def main():
     try:
         while True:
             # benchmark_start.append(time.time())
-            # i += 1
+            i += 1
 
             b.send(b.getData(), "DATA")
             try:
