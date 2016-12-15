@@ -45,7 +45,7 @@ class Benchmark:
             if self.last[1] != key or self.last[0] != self.cnt.get():
                 print("Something bad happend")
                 return
-            self.times[key][self.cnt.get()] = [self.last[1], base_time.time()]
+            self.times[key][self.cnt.get()] = [self.last[2], base_time.time()]
 
     def calcDiff(self):
 
@@ -63,11 +63,18 @@ class Benchmark:
 
         cropped = self.times
 
-        self.data = [0] * mini
+        self.data = {}
+
+        a = set([])
+
+        for key in cropped:
+            set.add(tuple(dict.keys(cropped[key])))
+
+
 
         minimal_time = 1000000000
 
-        for index in range(self.cnt.get()):
+        for index in a:
 
             self.data[index] = {}
 
@@ -88,8 +95,7 @@ class Benchmark:
             else:
                 minimal_time = min(minimal_time, int(self.data[index]["Overall Loop time"]))
 
-        cnt = minimal_time+100
-        rng = range(minimal_time, cnt)
+        cnt = len(a)
 
         loop_times = [0] * cnt
         read_sensor = [0] * cnt
@@ -106,7 +112,7 @@ class Benchmark:
             receive_data_time = d["Receiving Data"]
             waiting_time = d["Waiting"]
             apply_data_time = d["Motor right"] + d["Motor left"]
-            for key in rng:
+            for key in cnt:
                 if loop_time - 0.5 < key <= loop_time + 0.5:
                     loop_times[key] += 1
                     read_sensor[key] += read_sensor_time
@@ -117,7 +123,7 @@ class Benchmark:
 
         with open("result_bot_measurements_with_socket.txt", "w+") as f:
             print("ms", "\t".join(map(lambda h: '"' + h + '"', dict.keys(self.times))), sep='\t', file=f)
-            for key in rng:
+            for key in cnt:
                 print(
                     key,
                     0 if loop_times[key] == 0 else read_sensor[key] / loop_times[key],
