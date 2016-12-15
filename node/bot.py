@@ -37,16 +37,16 @@ class Benchmark:
     def calcDiff(self):
         for i in self.times:
             self.data[i] = []
-            for j in self.times[i][0]:
+            for j, k in enumerate(self.times[i][0]):
                 self.data[j].append((self.times[i][1][j] - self.times[i][0][j])*1000)
                 # self.times[i][2].append() = self.times[i][1][j] - self.times[i][0][j]
 
         self.data["Waiting"] = []
-        for i in self.times["Send Data"]:
+        for i, j in enumerate(self.times["Send Data"][0]):
             self.data["Waiting"].append((self.times["Receiving Data"][0][i] - self.times["Send Data"][1][i])*1000)
 
         self.data["Overall Loop time"] = []
-        for i in self.times["Send Data"][0]:
+        for i, j in enumerate(self.times["Send Data"][0]):
             self.data["Overall Loop time"].append((self.times["Motor right"][1][i] - self.times["Send Data"][0][i])*1000)
 
         loop_times = [0] * 100

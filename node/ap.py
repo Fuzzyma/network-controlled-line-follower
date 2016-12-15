@@ -177,7 +177,7 @@ class AP:
         return self
 
     def calibrate(self):
-        white, black = self.sendEnsured(type='CALIBRATION_REQUEST').receive('CALIBRATION_DATA').received["data"]
+        white, black = self.sendEnsured(type='CALIBRATION_REQUEST', data=False).receive('CALIBRATION_DATA').received["data"]
         # self.midpoint = (white - black) / 2 + black
 
         # self.pid = PID(1.4, 0.01, -5, white, black, **{"antiwindup": 20, "maxval": 300})
