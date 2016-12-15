@@ -74,7 +74,7 @@ def main():
     except ShutdownException:
         pass
 
-    print("[ main_ap.py] Shutdown", file=sys.stderr)
+    print("[ main_ap.py ] Shutdown", file=sys.stderr)
     try:
         ap.sendEnsured(type="CONTROL", data=[0, 0], timeout=2000, last=True)
     except TimeoutError:
@@ -87,8 +87,8 @@ def main():
     result = [i * 1000 for i in result]
 
     if len(result):
-        print("[ main_ap.py] Mean time:", sum(result) / float(len(result)), file=sys.stderr)
-        print("[ main_ap.py] Max/Min:", max(result), '/', min(result), file=sys.stderr)
+        print("[ main_ap.py ] Mean time:", sum(result) / float(len(result)), file=sys.stderr)
+        print("[ main_ap.py ] Max/Min:", max(result), '/', min(result), file=sys.stderr)
 
     sys.exit()
 

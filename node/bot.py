@@ -41,15 +41,21 @@ class Benchmark:
         for i in self.times:
             self.data[i] = []
             for j in self.times[i]:
-                self.data[j].append((j[1] - j[0])*1000)
+                self.data[i].append((j[1] - j[0])*1000)
 
         self.data["Waiting"] = []
         for i, j in enumerate(self.times["Send Data"]):
-            self.data["Waiting"].append((self.times["Receiving Data"][i][0] - self.times["Send Data"][i][1])*1000)
+            try:
+                self.data["Waiting"].append((self.times["Receiving Data"][i][0] - self.times["Send Data"][i][1])*1000)
+            except IndexError:
+                pass
 
         self.data["Overall Loop time"] = []
         for i, j in enumerate(self.times["Send Data"]):
-            self.data["Overall Loop time"].append((self.times["Motor right"][i][1] - self.times["Send Data"][i][0])*1000)
+            try:
+                self.data["Overall Loop time"].append((self.times["Motor right"][i][1] - self.times["Send Data"][i][0])*1000)
+            except IndexError:
+                pass
 
         print(self.data)
 
