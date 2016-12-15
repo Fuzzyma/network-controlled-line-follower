@@ -38,6 +38,10 @@ class Benchmark:
 
     def calcDiff(self):
 
+        cropped = [d[5:] for d in self.times]
+
+        print(cropped)
+        return
         for i in self.times:
             self.data[i] = []
             for j in self.times[i]:
