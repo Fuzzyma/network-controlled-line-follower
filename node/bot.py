@@ -38,28 +38,27 @@ class Benchmark:
 
     def calcDiff(self):
 
-        cropped = [d[5:] for d in self.times]
+        cropped = {}
+        mini = 10000000
 
-        print(cropped)
-        return
         for i in self.times:
-            self.data[i] = []
-            for j in self.times[i]:
-                self.data[i].append((j[1] - j[0])*1000)
+            cropped[i] = self.times[i][5:]
+            mini = min(len(cropped[i]), mini)
 
-        self.data["Waiting"] = []
-        for i, j in enumerate(self.times["Send Data"]):
-            try:
-                self.data["Waiting"].append((self.times["Receiving Data"][i][0] - self.times["Send Data"][i][1])*1000)
-            except IndexError:
-                pass
+        for i in cropped:
+            cropped[i] = cropped[i][:mini]
 
-        self.data["Overall Loop time"] = []
-        for i, j in enumerate(self.times["Send Data"]):
-            try:
-                self.data["Overall Loop time"].append((self.times["Motor right"][i][1] - self.times["Send Data"][i][0])*1000)
-            except IndexError:
-                pass
+        self.data = [0] * mini
+
+        for index in range(mini):
+
+            self.data[index] = {}
+
+            for key in cropped:
+                self.data[index][key] = (cropped[key][index][1] - cropped[key][index][0])*1000
+
+            self.data[index]["Waiting"] = (cropped["Receiving Data"][index][0] - cropped["Send Data"][index][1]) * 1000
+            self.data[index]["Overall Loop time"] = (cropped["Motor right"][index][1] - cropped["Send Data"][index][0])*1000
 
         print(self.data)
 
