@@ -37,10 +37,11 @@ class Benchmark:
             self.times[key].append([self.last[1], base_time.time()])
 
     def calcDiff(self):
+
         for i in self.times:
             self.data[i] = []
             for j in self.times[i]:
-                self.data[j].append((self.times[i][j][1] - self.times[i][j][1])*1000)
+                self.data[j].append((j[1] - j[0])*1000)
 
         self.data["Waiting"] = []
         for i, j in enumerate(self.times["Send Data"]):
