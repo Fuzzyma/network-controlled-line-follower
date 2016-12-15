@@ -74,6 +74,7 @@ class Benchmark:
         minimal_time = 1000000000
 
         for index in a:
+            doContinue = False
 
             self.data[index] = {}
 
@@ -81,16 +82,23 @@ class Benchmark:
                 try:
                     self.data[index][key] = (cropped[key][index][1] - cropped[key][index][0])*1000
                 except KeyError:
-                    pass
+                    del self.data[index]
+                    doContinue = True
+                    break
+
+            if doContinue:
+                continue
 
             try:
                 self.data[index]["Waiting"] = (cropped["Receiving Data"][index][0] - cropped["Send Data"][index][1]) * 1000
             except KeyError:
-                pass
+                del self.data[index]
+                continue
             try:
                 self.data[index]["Overall Loop time"] = (cropped["Motor right"][index][1] - cropped["Send Data"][index][0])*1000
             except KeyError:
-                pass
+                del self.data[index]
+                continue
             else:
                 minimal_time = min(minimal_time, int(self.data[index]["Overall Loop time"]))
 
@@ -135,6 +143,7 @@ class Benchmark:
                     # 0 if loop_times[key] == 0 else packages[key]/loop_times[key],
                     sep='\t', file=f
                 )
+
 
 class BlackLineException(RuntimeError):
     pass
