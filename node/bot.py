@@ -16,6 +16,77 @@ else:
     from .constants import DEBUG, BOT_ADDR, AP_ADDR, RIGHT_PORT, LEFT_PORT
 
 
+class Benchmark:
+
+    def __init__(self):
+        self.times = {}
+        self.data = {}
+
+    def add(self, key, finish=False):
+
+        if key not in self.times:
+            self.times[key] = [[], []]
+
+        if not finish:
+            if len(self.times[key][0]) > len(self.times[key][1]):
+                self.times[key][0].pop()
+            self.times[key][0].append(base_time.time())
+        else:
+            self.times[key][1].append(base_time.time())
+
+    def calcDiff(self):
+        for i in self.times:
+            self.data[i] = []
+            for j in self.times[i][0]:
+                self.data[j].append((self.times[i][1][j] - self.times[i][0][j])*1000)
+                # self.times[i][2].append() = self.times[i][1][j] - self.times[i][0][j]
+
+        self.data["Waiting"] = []
+        for i in self.times["Send Data"]:
+            self.data["Waiting"].append((self.times["Receiving Data"][0][i] - self.times["Send Data"][1][i])*1000)
+
+        self.data["Overall Loop time"] = []
+        for i in self.times["Send Data"][0]:
+            self.data["Overall Loop time"].append((self.times["Motor right"][1][i] - self.times["Send Data"][0][i])*1000)
+
+        loop_times = [0] * 100
+        read_sensor = [0] * 100
+        send_data = [0] * 100
+        receive_data = [0] * 100
+        waiting_data = [0] * 100
+        apply_data = [0] * 100
+
+        for d in self.data:
+            loop_time = d["Overall Loop time"]
+            read_sensor_time = d["Read Sensor"]
+            send_data_time = d["Send Data"]
+            receive_data_time = d["Receiving Data"]
+            waiting_time = d["Waiting"]
+            apply_data_time = d["Motor right"] + d["Motor left"]
+            for key in range(10, 100):
+                if loop_time - 0.5 < key <= loop_time + 0.5:
+                    loop_times[key] += 1
+                    read_sensor[key] += read_sensor_time
+                    send_data[key] += send_data_time
+                    receive_data[key] += receive_data_time
+                    waiting_data[key] += waiting_time
+                    apply_data[key] += apply_data_time
+
+        with open("result_bot_measurements_with_socket.tyt", "w+") as f:
+            print("ms", "\t".join(map(lambda h: '"' + h + '"', dict.keys(self.data))), sep='\t', file=f)
+            for key in range(10, 100):
+                print(
+                    key,
+                    0 if loop_times[key] == 0 else read_sensor[key] / loop_times[key],
+                    0 if loop_times[key] == 0 else send_data[key] / loop_times[key],
+                    0 if loop_times[key] == 0 else receive_data[key] / loop_times[key],
+                    0 if loop_times[key] == 0 else waiting_data[key] / loop_times[key],
+                    0 if loop_times[key] == 0 else apply_data[key] / loop_times[key],
+                    loop_times[key],
+                    # 0 if loop_times[key] == 0 else packages[key]/loop_times[key],
+                    sep='\t', file=f
+                )
+
 class BlackLineException(RuntimeError):
     pass
 
@@ -61,9 +132,11 @@ class Packet:
 
 
 class Bot:
-    def __init__(self):
+    def __init__(self, benchmark=Benchmark()):
         self.botCon = BOT_ADDR
         self.apCon = AP_ADDR
+
+        self.benchmark = benchmark
 
         # initialize sensor and motors
         # self.sensor = ev3.ColorSensor()
@@ -103,7 +176,9 @@ class Bot:
             return False
 
         try:
+            self.benchmark.add("Receiving Data")
             payload, addr = self.sock.recvfrom(256)
+            self.benchmark.add("Receiving Data", True)
         except (socket.error, socket.herror, socket.gaierror, socket.timeout):
             return False
         else:
@@ -181,8 +256,9 @@ class Bot:
         if DEBUG >= 2:
             print("Sending:", payload)
 
+        self.benchmark.add("Send Data")
         self.sock.sendto(json.dumps(payload).encode('utf-8'), self.apCon)
-
+        self.benchmark.add("Send Data", True)
         return self
 
     def sendEnsured(self, data=None, type='CONTROL'):
@@ -216,12 +292,16 @@ class Bot:
 
     def left(self, speed):
         # self.lMotor.run_forever(speed_sp=speed)
+        self.benchmark.add("Motor left")
         self.motor.set_speed(speed, LEFT_PORT)
+        self.benchmark.add("Motor left", True)
         return self
 
     def right(self, speed):
         # self.rMotor.run_forever(speed_sp=speed)
+        self.benchmark.add("Motor right")
         self.motor.set_speed(speed, RIGHT_PORT)
+        self.benchmark.add("Motor right", True)
         return self
 
     def stop(self):
@@ -234,7 +314,10 @@ class Bot:
         return self
 
     def getData(self):
-        return self.better_sensor_l.grey_avg, self.better_sensor_r.grey_avg
+        self.benchmark.add("Read Sensor")
+        temp = self.better_sensor_l.grey_avg, self.better_sensor_r.grey_avg
+        self.benchmark.add("Read Sensor", True)
+        return temp
         # return self.sensor.value()
 
     def getLastCorrection(self):

@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
-from node.bot import Bot, BlackLineException, time
+from node.bot import Bot, BlackLineException, time, Benchmark
 
 
 def main():
-    b = Bot().reset()
+    benchmark = Benchmark()
+    b = Bot(benchmark).reset()
 
     # two possible outcomes:
     # AP has data and sends request with data = True
@@ -45,6 +46,8 @@ def main():
         b.stop().reset()
         # print("The average loop time was", (time.time() - start)/i * 1000, "ms")
         print(dropped_packages, "Packages where dropped because of AP not responding in time")
+
+        benchmark.calcDiff()
 
         '''
         if not len(benchmark_start):
