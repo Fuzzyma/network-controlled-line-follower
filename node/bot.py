@@ -88,7 +88,6 @@ class Benchmark:
             else:
                 minimal_time = min(minimal_time, int(self.data[index]["Overall Loop time"]))
 
-
         cnt = minimal_time+100
         rng = range(minimal_time, cnt)
 
@@ -100,6 +99,7 @@ class Benchmark:
         apply_data = [0] * cnt
 
         for d in self.data:
+            d = self.data[d]
             loop_time = d["Overall Loop time"]
             read_sensor_time = d["Read Sensor"]
             send_data_time = d["Send Data"]

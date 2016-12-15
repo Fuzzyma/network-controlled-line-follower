@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
-from node.bot import Bot, BlackLineException, time, Benchmark
+from node.bot import Bot, BlackLineException, time, Benchmark, Counter
 
 
 def main():
-    benchmark = Benchmark()
+    cnt = Counter()
+    benchmark = Benchmark(cnt)
     b = Bot(benchmark).reset()
 
     # two possible outcomes:
@@ -25,6 +26,7 @@ def main():
 
     try:
         while True:
+            cnt.touch()
             # benchmark_start.append(time.time())
             i += 1
 
