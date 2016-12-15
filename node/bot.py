@@ -364,7 +364,7 @@ class Bot:
 
     def getData(self):
         self.benchmark.add("Read Sensor")
-        temp = self.better_sensor_l.grey_avg, self.better_sensor_r.grey_avg
+        temp = self.better_sensor_l.grey, self.better_sensor_r.grey
         self.benchmark.add("Read Sensor", True)
         return temp
         # return self.sensor.value()
