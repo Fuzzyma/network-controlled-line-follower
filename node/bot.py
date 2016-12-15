@@ -16,9 +16,20 @@ else:
     from .constants import DEBUG, BOT_ADDR, AP_ADDR, RIGHT_PORT, LEFT_PORT
 
 
+class Counter:
+    def __init__(self):
+        self.cnt = 0
+
+    def touch(self):
+        self.cnt += 1
+
+    def get(self):
+        return self.cnt
+
 class Benchmark:
 
-    def __init__(self):
+    def __init__(self, cnt=Counter()):
+        self.cnt = cnt
         self.times = {}
         self.data = {}
         self.last = []
@@ -26,15 +37,15 @@ class Benchmark:
     def add(self, key, finish=False):
 
         if key not in self.times:
-            self.times[key] = []
+            self.times[key] = {}
 
         if not finish:
-            self.last = [key, base_time.time()]
+            self.last = [self.cnt.get(), key, base_time.time()]
         else:
-            if self.last[0] != key:
+            if self.last[1] != key or self.last[0] != self.cnt.get():
                 print("Something bad happend")
                 return
-            self.times[key].append([self.last[1], base_time.time()])
+            self.times[key][self.cnt.get()] = [self.last[1], base_time.time()]
 
     def calcDiff(self):
 
@@ -42,27 +53,41 @@ class Benchmark:
         mini = 10000000
 
         for i in self.times:
-            cropped[i] = self.times[i][5:]
-            mini = min(len(cropped[i]), mini)
+            self.times[i].pop(0, None)
+            self.times[i].pop(1, None)
+            self.times[i].pop(self.cnt.get(), None)
+            # mini = min(len(cropped[i]), mini)
 
-        for i in cropped:
-            cropped[i] = cropped[i][:mini]
+        #for i in cropped:
+        #    cropped[i] = cropped[i][:mini]
+
+        cropped = self.times
 
         self.data = [0] * mini
 
         minimal_time = 1000000000
 
-        for index in range(mini):
+        for index in range(self.cnt.get()):
 
             self.data[index] = {}
 
             for key in cropped:
-                self.data[index][key] = (cropped[key][index][1] - cropped[key][index][0])*1000
+                try:
+                    self.data[index][key] = (cropped[key][index][1] - cropped[key][index][0])*1000
+                except KeyError:
+                    pass
 
-            self.data[index]["Waiting"] = (cropped["Receiving Data"][index][0] - cropped["Send Data"][index][1]) * 1000
-            self.data[index]["Overall Loop time"] = (cropped["Motor right"][index][1] - cropped["Send Data"][index][0])*1000
+            try:
+                self.data[index]["Waiting"] = (cropped["Receiving Data"][index][0] - cropped["Send Data"][index][1]) * 1000
+            except KeyError:
+                pass
+            try:
+                self.data[index]["Overall Loop time"] = (cropped["Motor right"][index][1] - cropped["Send Data"][index][0])*1000
+            except KeyError:
+                pass
+            else:
+                minimal_time = min(minimal_time, int(self.data[index]["Overall Loop time"]))
 
-            minimal_time = min(minimal_time, int(self.data[index]["Overall Loop time"]))
 
         cnt = minimal_time+100
         rng = range(minimal_time, cnt)
