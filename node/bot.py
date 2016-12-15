@@ -111,7 +111,7 @@ class Benchmark:
             receive_data_time = d["Receiving Data"]
             waiting_time = d["Waiting"]
             apply_data_time = d["Motor right"] + d["Motor left"]
-            for key in cnt:
+            for key in range(cnt):
                 if loop_time - 0.5 < key <= loop_time + 0.5:
                     loop_times[key] += 1
                     read_sensor[key] += read_sensor_time
@@ -122,7 +122,7 @@ class Benchmark:
 
         with open("result_bot_measurements_with_socket.txt", "w+") as f:
             print("ms", "\t".join(map(lambda h: '"' + h + '"', dict.keys(self.times))), sep='\t', file=f)
-            for key in cnt:
+            for key in range(cnt):
                 print(
                     key,
                     0 if loop_times[key] == 0 else read_sensor[key] / loop_times[key],
