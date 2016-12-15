@@ -21,33 +21,36 @@ class Benchmark:
     def __init__(self):
         self.times = {}
         self.data = {}
+        self.last = []
 
     def add(self, key, finish=False):
 
         if key not in self.times:
-            self.times[key] = [[], []]
+            self.times[key] = []
 
         if not finish:
-            if len(self.times[key][0]) > len(self.times[key][1]):
-                self.times[key][0].pop()
-            self.times[key][0].append(base_time.time())
+            self.last = [key, base_time.time()]
         else:
-            self.times[key][1].append(base_time.time())
+            if self.last[0] != key:
+                print("Something bad happend")
+                return
+            self.times[key].append([self.last, base_time.time()])
 
     def calcDiff(self):
         for i in self.times:
             self.data[i] = []
-            for j, k in enumerate(self.times[i][0]):
-                self.data[j].append((self.times[i][1][j] - self.times[i][0][j])*1000)
-                # self.times[i][2].append() = self.times[i][1][j] - self.times[i][0][j]
+            for j in self.times[i]:
+                self.data[j].append((self.times[i][j][1] - self.times[i][j][1])*1000)
 
         self.data["Waiting"] = []
-        for i, j in enumerate(self.times["Send Data"][0]):
-            self.data["Waiting"].append((self.times["Receiving Data"][0][i] - self.times["Send Data"][1][i])*1000)
+        for i, j in enumerate(self.times["Send Data"]):
+            self.data["Waiting"].append((self.times["Receiving Data"][i][0] - self.times["Send Data"][i][1])*1000)
 
         self.data["Overall Loop time"] = []
-        for i, j in enumerate(self.times["Send Data"][0]):
-            self.data["Overall Loop time"].append((self.times["Motor right"][1][i] - self.times["Send Data"][0][i])*1000)
+        for i, j in enumerate(self.times["Send Data"]):
+            self.data["Overall Loop time"].append((self.times["Motor right"][i][1] - self.times["Send Data"][i][0])*1000)
+
+        print(self.data)
 
         loop_times = [0] * 100
         read_sensor = [0] * 100
