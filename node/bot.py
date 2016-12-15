@@ -94,7 +94,7 @@ class Benchmark:
             else:
                 minimal_time = min(minimal_time, int(self.data[index]["Overall Loop time"]))
 
-        cnt = len(a)
+        cnt = 100
 
         loop_times = [0] * cnt
         read_sensor = [0] * cnt
@@ -105,6 +105,7 @@ class Benchmark:
 
         for d in self.data:
             d = self.data[d]
+            print(d)
             loop_time = d["Overall Loop time"]
             read_sensor_time = d["Read Sensor"]
             send_data_time = d["Send Data"]
