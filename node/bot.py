@@ -90,7 +90,7 @@ class Benchmark:
                     waiting_data[key] += waiting_time
                     apply_data[key] += apply_data_time
 
-        with open("result_bot_measurements_with_socket.tyt", "w+") as f:
+        with open("result_bot_measurements_with_socket.txt", "w+") as f:
             print("ms", "\t".join(map(lambda h: '"' + h + '"', dict.keys(self.times))), sep='\t', file=f)
             for key in rng:
                 print(
