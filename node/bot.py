@@ -68,9 +68,8 @@ class Benchmark:
         a = set([])
 
         for key in cropped:
-            set.add(tuple(dict.keys(cropped[key])))
-
-
+            for index in cropped[key]:
+                a.add(index)
 
         minimal_time = 1000000000
 
