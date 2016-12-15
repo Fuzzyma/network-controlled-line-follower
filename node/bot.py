@@ -34,7 +34,7 @@ class Benchmark:
             if self.last[0] != key:
                 print("Something bad happend")
                 return
-            self.times[key].append([self.last, base_time.time()])
+            self.times[key].append([self.last[1], base_time.time()])
 
     def calcDiff(self):
         for i in self.times:
