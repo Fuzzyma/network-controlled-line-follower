@@ -50,6 +50,8 @@ class Benchmark:
 
         self.data = [0] * mini
 
+        minimal_time = 1000000000
+
         for index in range(mini):
 
             self.data[index] = {}
@@ -60,14 +62,17 @@ class Benchmark:
             self.data[index]["Waiting"] = (cropped["Receiving Data"][index][0] - cropped["Send Data"][index][1]) * 1000
             self.data[index]["Overall Loop time"] = (cropped["Motor right"][index][1] - cropped["Send Data"][index][0])*1000
 
-        print(self.data)
+            minimal_time = min(minimal_time, int(self.data[index]["Overall Loop time"]))
 
-        loop_times = [0] * 100
-        read_sensor = [0] * 100
-        send_data = [0] * 100
-        receive_data = [0] * 100
-        waiting_data = [0] * 100
-        apply_data = [0] * 100
+        cnt = minimal_time+100
+        rng = range(minimal_time, cnt)
+
+        loop_times = [0] * cnt
+        read_sensor = [0] * cnt
+        send_data = [0] * cnt
+        receive_data = [0] * cnt
+        waiting_data = [0] * cnt
+        apply_data = [0] * cnt
 
         for d in self.data:
             loop_time = d["Overall Loop time"]
@@ -76,7 +81,7 @@ class Benchmark:
             receive_data_time = d["Receiving Data"]
             waiting_time = d["Waiting"]
             apply_data_time = d["Motor right"] + d["Motor left"]
-            for key in range(10, 100):
+            for key in rng:
                 if loop_time - 0.5 < key <= loop_time + 0.5:
                     loop_times[key] += 1
                     read_sensor[key] += read_sensor_time
@@ -86,8 +91,8 @@ class Benchmark:
                     apply_data[key] += apply_data_time
 
         with open("result_bot_measurements_with_socket.tyt", "w+") as f:
-            print("ms", "\t".join(map(lambda h: '"' + h + '"', dict.keys(self.data))), sep='\t', file=f)
-            for key in range(10, 100):
+            print("ms", "\t".join(map(lambda h: '"' + h + '"', dict.keys(self.times))), sep='\t', file=f)
+            for key in rng:
                 print(
                     key,
                     0 if loop_times[key] == 0 else read_sensor[key] / loop_times[key],
