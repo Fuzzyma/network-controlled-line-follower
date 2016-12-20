@@ -7,12 +7,13 @@ import select
 
 
 if __name__ == '__main__':
-    from MotorControl import MotorControl
     # from ev3con.linienverfolgung.control import BetterColorSensor
-    from ColorSensor import ColorSensor
+    from ColorSensor import ColorSensor as BetterColorSensor
+    from MotorControl import MotorControl
     from constants import DEBUG, BOT_ADDR, AP_ADDR, RIGHT_PORT, LEFT_PORT
 else:
-    # from node.ColorSensor import ColorSensor
+    # from node.ev3con.linienverfolgung.control import BetterColorSensor
+    from node.ColorSensor import ColorSensor as BetterColorSensor
     from node.MotorControl import MotorControl
     from .constants import DEBUG, BOT_ADDR, AP_ADDR, RIGHT_PORT, LEFT_PORT
 
@@ -26,7 +27,6 @@ class Counter:
 
     def get(self):
         return self.cnt
-
 
 class Benchmark:
 
