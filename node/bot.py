@@ -8,10 +8,11 @@ import select
 
 if __name__ == '__main__':
     from MotorControl import MotorControl
-    from ev3con.linienverfolgung.control import BetterColorSensor
+    # from ev3con.linienverfolgung.control import BetterColorSensor
+    from ColorSensor import ColorSensor
     from constants import DEBUG, BOT_ADDR, AP_ADDR, RIGHT_PORT, LEFT_PORT
 else:
-    from node.ev3con.linienverfolgung.control import BetterColorSensor
+    # from node.ColorSensor import ColorSensor
     from node.MotorControl import MotorControl
     from .constants import DEBUG, BOT_ADDR, AP_ADDR, RIGHT_PORT, LEFT_PORT
 
@@ -25,6 +26,7 @@ class Counter:
 
     def get(self):
         return self.cnt
+
 
 class Benchmark:
 
@@ -56,6 +58,7 @@ class Benchmark:
             self.times[i].pop(0, None)
             self.times[i].pop(1, None)
             self.times[i].pop(self.cnt.get(), None)
+            self.times[i].pop(self.cnt.get()-1, None)
             # mini = min(len(cropped[i]), mini)
 
         #for i in cropped:
