@@ -122,7 +122,7 @@ class Benchmark:
                     print("\t".join(map(lambda h: '"' + h + '"', dict.keys(d))), sep='\t', file=f)
                     header = False
 
-                print("\t".join(map(lambda h: '"' + h + '"', dict.items(d))), sep='\t', file=f)
+                print("\t".join(map(lambda h: '"' + h + '"', dict.values(d))), sep='\t', file=f)
 
         for d in self.data:
             d = self.data[d]
