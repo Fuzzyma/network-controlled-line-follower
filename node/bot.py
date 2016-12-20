@@ -111,9 +111,21 @@ class Benchmark:
         waiting_data = [0] * cnt
         apply_data = [0] * cnt
 
+        with open("result_bot_measurements_with_socket_table.txt", "w+") as f:
+
+            header = True
+
+            for d in self.data:
+                d = self.data[d]
+
+                if header:
+                    print("\t".join(map(lambda h: '"' + h + '"', dict.keys(d))), sep='\t', file=f)
+                    header = False
+
+                print("\t".join(map(lambda h: '"' + h + '"', dict.items(d))), sep='\t', file=f)
+
         for d in self.data:
             d = self.data[d]
-            print(d)
             loop_time = d["Overall Loop time"]
             read_sensor_time = d["Read Sensor"]
             send_data_time = d["Send Data"]
@@ -129,7 +141,7 @@ class Benchmark:
                     waiting_data[key] += waiting_time
                     apply_data[key] += apply_data_time
 
-        with open("result_bot_measurements_with_socket.txt", "w+") as f:
+        with open("result_bot_measurements_with_socket_crunched.txt", "w+") as f:
             print("ms", "\t".join(map(lambda h: '"' + h + '"', dict.keys(self.times))), sep='\t', file=f)
             for key in range(cnt):
                 print(
